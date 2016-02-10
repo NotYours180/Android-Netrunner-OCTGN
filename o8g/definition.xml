@@ -3,7 +3,7 @@
       xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
       name="Android-Netrunner" 
       id="0f38e453-26df-4c04-9d67-6d43de939c77" 
-      version="3.17.5.0"
+      version="3.23.0.0"
       octgnVersion="3.1.127.0" 
       markersize="20"
       tags="asymmetric cyberpunk LCG bluff duel"
@@ -14,6 +14,7 @@
       setsurl="http://octgn.gamersjudgement.com/wordpress/anr/sets"
       gameurl="http://octgn.gamersjudgement.com/wordpress/anr"
       authors="Db0"
+      scriptVersion="3.1.0.1"
       iconurl="https://raw.github.com/db0/Android-Netrunner-OCTGN/master/ANR_box.jpg">
    <scripts>
       <script src="Scripts/actions.py" />
@@ -32,9 +33,11 @@
        <event name="OnGameStart" action="resetAll" />
        <event name="OnLoadDeck" action="checkDeck" />
        <event name="OnChangeCounter" action="parseNewCounters" />
-       <event name="OnMoveCard" action="checkMovedCard" />
+       <event name="OnMoveCards" action="checkMovedCards" />
+       <event name="OnScriptedMoveCards" action="checkScriptedMovedCards" />
        <event name="OnGlobalVariableChanged" action="checkGlobalVars" />
        <event name="OnMarkerChanged" action="checkMarkerSafety" />
+       <event name="OnCardDoubleClick" action="checkCardDoubleClicked" />
    </events>
    <sounds>
       <!-- Common Sounds -->
@@ -134,6 +137,7 @@
      <globalvariable name="SuccessfulRun" value="False" /> 
      <globalvariable name="CurrentTraceEffect" value="None" />
      <globalvariable name="CorpTraceValue" value="None" />
+     <globalvariable name="RunnerTraceValue" value="None" />
      <globalvariable name="Host Cards" value="{}" />
      <globalvariable name="Max Clicks" value="{}" />
      <globalvariable name="League" value="" />
@@ -146,6 +150,7 @@
      <globalvariable name="AutoScript Variables" value="{}" /> 
      <globalvariable name="Paused Runner" value="False" /> 
      <globalvariable name="Bug Memory" value="None" /> 
+     <globalvariable name="Genetics Pavilion Memory" value="0" /> 
    </globalvariables>
    <card back="Card/corp-back.jpg" front="Card/front.jpg" width="63" height="88" cornerRadius="2">
       <property name="Subtitle" type="String" hidden="False" ignoreText="False"/>
@@ -262,6 +267,7 @@
          <groupaction menu="Announce No Rez" default="False" execute="BUTTON_NoRez"  shortcut="Ctrl+2"/>
          <groupaction menu="OK" default="False" execute="BUTTON_OK"  shortcut="Ctrl+3"/>
          <groupaction menu="Wait!" default="False" execute="BUTTON_Wait" shortcut="Ctrl+4"/>
+         <groupaction menu="Thinking..." default="False" execute="BUTTON_Thinking" shortcut="Ctrl+5"/>
       </groupactions>
       <!-- <cardaction menu="Show Card Position" default="False" shortcut="Ctrl+Shift+X" execute="ShowPosC" />  -->
         
@@ -274,6 +280,7 @@
       <globalvariable name="Deck Stats" value="" /> 
       <globalvariable name="gameVersion" value="" /> 
       <globalvariable name="Awareness" value="[]" /> 
+      <globalvariable name="TripleID" value="None" /> 
       <hand name="HQ/Grip" visibility="me" ordered="False" width="63" height="88" icon="Groups/Hand.png">
          <cardaction menu="&#8986; Pay and Install Card" default="True" shortcut="enter" execute="intPlay" />
          <cardaction menu="Install Card at no cost" default="False" execute="playForFree" />

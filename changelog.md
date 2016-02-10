@@ -1,6 +1,184 @@
 Changelog - Android:Netrunner LCG OCTGN Game Definition
 ===============================================
 
+### 3.23.0.x
+
+* New game definition for **Kala Ghoda**. As always, almost every card scripted!
+* ##### Trickier Automations
+  * Run Amok: Target ICE and Double-click Run Amok to trash it.
+  * Street Magic: Manual use
+  * Jesminder Sareen: Manual use
+  * Mumbad City Grid: Manual use
+  * Interrupt 0: Use to track how much you pay per ICE you break, but I can't automate this further. Lose money manually afterwards
+  * Dedication Ceremony: Won't prevent you from scoring. Just don't do it.
+  * Kala Ghoda Real TV: Will whisper the card to you. DC it to trash it.
+* Archangel will not reveal face-down attachments on Peddler
+* **Added NAPD MW List to influence calculations**
+
+
+
+### 3.22.4.x
+
+* Brain Chip will now give correct MU
+* Cerebral Imaging will now give correct Hand Size
+* Genetics Pavilion will only work while face up
+* Clot shouldn't warn the corp from the peddler
+* Heartbit will now provide its MU
+* Assassin's second traced should work now
+* Charman Hiro not active when scored
+* Corporate Town fixed in multiple ways
+* Film Critic won't activate while in the peddler
+* Independent Thinking will now announce the correct amount of cards drawn.
+* Off Campus Apartment won't give an error instead of announcing its effect.
+
+
+### 3.22.3.x
+
+* Always be Running will now remind you to run first click
+* Fixed Archives Interface
+
+### 3.22.2.x
+
+* Fixed Adam's directives disappearing after trasing
+* Fixed Independent Thinking not trashing cards and giving you 2 cards only for directives.
+* 15 minutes will remove AP from the runner when reshuffled back in R&D
+* Fixed Media Blitz
+* Keegan should remove tags now
+* Fixed Archangel 
+* Wasteland should only trigger for runner cards. Unfortunately it cannot trigger for face down events so a manual use has been added as well
+
+### 3.22.1.x
+
+* Fixed more than 1 Film Critic not working
+* Fixed Windfall bugging out
+* Fixed Keegan Lane
+* Fixed Team Sponsorship not seeking in Arc
+* Fixed Trope firing on corp turn
+* Fixed Safety First firing on runner turn
+* Fixed Public Support scoring each turn
+* Fixed successful runs failing when an untriggered checkpoint is on the table
+* Fixed Off-Campus Apartment (Thanks @jemeador)
+* Dir. Haas. Pet Project will now list cards which are in different piles
+* Game will now show you how many credits you had when you started a run
+
+
+
+### 3.22.0.x
+
+* New game definition for **Old HolyWood**, **Universe of Tomorrow** and **Data and Destiny!**. As always, almost every card scripted!
+
+Given the amount of cards in this set, [please check here](https://docs.google.com/spreadsheets/d/1opShzG9mUKnI_gkVyYAvrMHdG340V1LL6pMMqmriI3k/edit?usp=sharing) for how well each card functions. Cards not listed are fully automated.
+
+Also did an update on how Maximum Hand Size is calcated, and now it works like MU, with it always auto-updating. Please let me know if you notice any bugs.
+
+PS: Lacking templates for the mini factions, so all their cards are proxies as neutrals, except their IDs, which use factions. If you're any good, I'd appreciate getting some templates for those.
+
+### 3.21.2.x
+
+* Muertos Gang Member won't trigger an uninstall when discarded via Damage
+* Stopped cards exiled via Chronos Protocol triggerring their onTrash scripts
+* Stopped information leaking when uninstalling NEXT ICE
+* Off-Campus app. will now trigger scripts on hosted cards
+* Ghost Runner will install pre-reserved for stealth, to prevent making mistakes when trying to use credits.
+
+
+### 3.21.1.x
+
+* Fixed Gang sign
+
+### 3.21.0.x
+
+* New game definition for **The Underway**. As always, almost every card scripted!
+
+* ##### Trickier Automations
+   * Armand "Geist" Walker: Manual use similar to Exile
+   * Drive By: Expose manual as always (wait for Corp). After an expose, either the corp can trash, or you can trash by double-clicking Drive By
+   * Test Ground will derez all targeted cards. Make sure you target as many as you have tokens the relevant ones
+   * Allele Repression: You can target the cards in HQ before you use it to speed up the process.
+   * Marcus Batty: Manually use the subroutine is Psi succeeds
+
+### 3.20.1.x
+
+* Fixed Mandatory Upgrades and Self-Destruction Chips triggering after every advance
+* Valencia and GRNDL now properly put BP
+
+### 3.20.0.x
+
+* New game definition for **Chrome City**. As always, almost every card scripted!
+
+* ##### Trickier Automations
+   * Immolation Script: Manual use. Target the ICE and Double Click Immolation Script to trash it.
+   * Turntable: Manual use. Target both agendas and Double Click
+   * Chrome Parlor: Manual use. Double Click before playing genetics
+   * Analog Dreamers: Target the unrezzed card before pressing F3
+   * Oaktown Grid: Manually use it just before the runner is about to access cards in this server.
+   * Clairvoyant Monitor: Target the ICE before using the Monitor
+* Added "Thinking..." notification with Ctrl+5
+* Valencia VS GRNDL won't end with 2 BP for GRNDL
+* Fixed Shehe infinite loop on hosting itself
+* Comet playing double events will now cost you a click
+* Fixed hosting Parasite giving errors
+
+### 3.19.5.x
+
+Moved to API 3.1.0.1
+
+### 3.19.4.x
+
+* Fixes Caissas not rehosting
+* Double Brain-Tapping Warehouses shouldn't conflict anymore
+
+### 3.19.3.x
+
+* Blacklist shouldn't fire when unrezzed
+
+### 3.19.2.x
+
+* Fixed the game reporting the R&D empty after stealing TFP from a solo access
+
+### 3.19.1.x
+
+* Crisium Grid will clear its state if the run was unsuccessful
+* Off-Campus Apartment will cost a click to use now
+* Beach Party will not a click only on corp turn
+* Hayley Kaplan will be turned sideways whenever you install a card, to remind you, you have done so. You can still DC her to play a card from hand.
+* Comet will give MU and won't bug out when trying to use it.
+
+
+
+### 3.19.0.x
+
+* New game definition for **Breaker Bat**. As always, almost every card scripted!
+
+* ##### Trickier Automations
+   * Hacktivist Meeting: Trash will happen after card is rezzed, so if the corp doesn't have a card they can still play non-ice. Don't do it.
+   * Off Campus Apartment. Use it like Personal Workshop, not like a Daemon. Target connection from hand then DC it. In case you've already played the connection, you can target it and DB the OCA to host it manually after the fact.
+   * Haley Kaplan: Manual use
+   * Comet: Manual Use
+   * Turing: Lose clicks manually.
+   * Should prevent the runner using automated effects to fetch specific cards from their Heap, but won't prevent AR Lab Access.
+   * Breaker bay Grid: Manual use (Target card to rez and DC)
+
+### 3.18.1.0
+
+* Fixes text spam on retrieval.
+
+### 3.18.0.x
+
+* New game definition for **The Valley**. As always, almost every card scripted!
+
+* ##### Trickier Automations
+   * Clot: Not scripted but will remind the corp
+   * Paige Piper: Manual use after you install a card
+   * Adjusted Chronotype: Manual use
+   * Enhanced Vision: Will show only the title of the card
+   * Jinteki Bioteck: You will have to choose your department at the start of your first turn (You can also double click to do it before F1)
+   * Negotiator: Break with Credits manually.
+* Autoscripter switched to manual use to avoid triggering off of Heap/Stack installs.
+* Leela won't score bounced Chairmen
+* Gagarin won't trigger during runs on centrals.
+
+
 ### 3.17.5.x
 
 * Corp cannot flatline due to brain damage anymore ;)

@@ -738,7 +738,7 @@ Research Station
 -----
 bc0f047c-01b1-427f-a439-d451eda01105
 -----
-onRez:Gain2Hand Size||onTrash:Lose2Hand Size-ifActive
+whileInPlay:Provide2HandSize-forCorp
 +++++
 	
 .....
@@ -1330,7 +1330,7 @@ Public Sympathy
 -----
 bc0f047c-01b1-427f-a439-d451eda02050
 -----
-whileInstalled:Gain2Hand Size
+whileInPlay:Provide2HandSize-forRunner
 +++++
 
 .....
@@ -1873,7 +1873,7 @@ NBN: The World is Yours
 -----
 bc0f047c-01b1-427f-a439-d451eda02114
 -----
-onStartup:Gain1Hand Size-isSilent
+whileInPlay:Provide1HandSize-forCorp
 +++++
 
 .....
@@ -1935,7 +1935,7 @@ Cerebral Imaging: Infinite Frontiers
 -----
 bc0f047c-01b1-427f-a439-d451eda03001
 -----
-atTurnPreEnd:SetTo1Hand Size-perMyCounter{Credits}-duringMyTurn
+whileInPlay:SetToSpecialHandSize-forCorp
 +++++
 
 .....
@@ -1999,7 +1999,7 @@ Director Haas
 -----
 bc0f047c-01b1-427f-a439-d451eda03010
 -----
-onRez:Gain1Clicks$$Gain1Max Click||onTrash:Lose1Max Click-ifActive-ifUnscored$$Lose1Clicks-ifActive-ifUnscored$$ScoreMyself-onOpponent-ifAccessed-ifUnscored-preventTrash-runTrashScriptWhileInactive$$Gain2Agenda Points-onOpponent-ifAccessed-ifUnscored$$Put2Scored-isSilent-ifAccessed-ifUnscored
+onRez:Gain1Clicks$$Gain1Max Click||onTrash:Lose1Max Click-ifActive-ifUnscored$$Lose1Clicks-ifActive-ifUnscored$$ScoreMyself-onOpponent-ifAccessed-ifUnscored-preventTrash-runTrashScriptWhileInactive-explicitTrash$$Gain2Agenda Points-onOpponent-ifAccessed-ifUnscored-explicitTrash$$Put2Scored-isSilent-ifAccessed-ifUnscored-explicitTrash
 +++++
 
 .....
@@ -2311,7 +2311,7 @@ Borrowed Satellite
 -----
 bc0f047c-01b1-427f-a439-d451eda03050
 -----
-whileInstalled:Gain1Hand Size$$Gain1Base Link
+whileInPlay:Provide1HandSize-forRunner$$Gain1Base Link
 +++++
 
 .....
@@ -2369,7 +2369,7 @@ bc0f047c-01b1-427f-a439-d451eda04002
 -----
 CaissaPlace:ICE
 +++++
-A1B0G0T0:RehostMyself-Targeted-isICE||A0B0G0T0:RehostMyself-Targeted-isICE||A0B0G0T1:InstallTarget-DemiAutoTargeted-atCaissa-fromHand-choose1||A0B0G0T1:Retrieve1Card-fromHeap-grabCaissa-toTable||A0B0G0T0:RehostMyself-Targeted-isICE$$Gain1Credits$$Draw1Cards$$Remove1Test Run-isSilent
+A1B0G0T0:RehostMyself-Targeted-atICE||A0B0G0T0:RehostMyself-Targeted-isICE||A0B0G0T1:InstallTarget-DemiAutoTargeted-atCaissa-fromHand-choose1||A0B0G0T1:Retrieve1Card-fromHeap-grabCaissa-toTable||A0B0G0T0:RehostMyself-Targeted-isICE$$Gain1Credits$$Draw1Cards$$Remove1Test Run-isSilent
 .....
 Rook
 -----
@@ -2522,14 +2522,6 @@ bc0f047c-01b1-427f-a439-d451eda00001
 whileInPlay:CustomScript-foreachCardInstall-duringMyTurn||whileInPlay:CustomScript-foreachCardPlay-duringMyTurn||whileInPlay:CustomScript-foreachCardDrawnClicked-duringMyTurn||whileInPlay:CustomScript-foreachCreditClicked-duringMyTurn||whileInPlay:CustomScript-foreachCardAction-duringMyTurn||atRunStart:CustomScript-duringMyTurn||atTurnStart:CustomScript-duringMyTurn
 +++++
 A0B0G0T0:Gain1Clicks
-.....
-Laramy Fisk
------
-bc0f047c-01b1-427f-a439-d451eda00002
------
-atSuccessfulRun:Draw1Card-onOpponent-ifSuccessfulRunHQ-onlyOnce-isOptional||atSuccessfulRun:Draw1Card-onOpponent-ifSuccessfulRunR&D-onlyOnce-isOptional||atSuccessfulRun:Draw1Card-onOpponent-ifSuccessfulRunArchives-onlyOnce-isOptional
-+++++
-
 .....
 Bishop
 -----
@@ -3161,7 +3153,7 @@ GRNDL
 -----
 bc0f047c-01b1-427f-a439-d451eda04097
 -----
-onStartup:Gain5Credits-isSilent$$Gain1Bad Publicity-isSilent
+onStartup:Gain5Credits-isSilent$$SetTo1Bad Publicity-isSilent
 +++++
 
 .....
@@ -3267,7 +3259,7 @@ bc0f047c-01b1-427f-a439-d451eda04110
 -----
 
 +++++
-A0B0G0T0:Lose2Hand Size-onOpponent-isSubroutine$$Put1Gyri Labyrinth-AutoTargeted-atIdentity-targetOpponents
+A0B0G0T0:Put1Gyri Labyrinth-AutoTargeted-atIdentity-targetOpponents-isSilent$$SimplyAnnounce{reduce the runner maximum hand size by 2 until the beggining of the Corp turn}
 .....
 Reclamation Order
 -----
@@ -3409,7 +3401,7 @@ Chairman Hiro
 -----
 bc0f047c-01b1-427f-a439-d451eda05008
 -----
-onRez:Lose2Hand Size-onOpponent||onTrash:Gain2Hand Size-onOpponent-ifActive-ifUnscored$$ScoreMyself-onOpponent-ifAccessed-ifUnscored-preventTrash-runTrashScriptWhileInactive$$Gain2Agenda Points-onOpponent-ifAccessed-ifUnscored$$Put2Scored-isSilent-ifAccessed-ifUnscored
+whileInPlay:Steal2HandSize-forRunner||onTrash:ScoreMyself-onOpponent-ifAccessed-ifUnscored-preventTrash-runTrashScriptWhileInactive-explicitTrash$$Gain2Agenda Points-onOpponent-ifAccessed-ifUnscored-explicitTrash$$Put2Scored-isSilent-ifAccessed-ifUnscored-explicitTrash
 +++++
 
 .....
@@ -3417,7 +3409,7 @@ Mental Health Clinic
 -----
 bc0f047c-01b1-427f-a439-d451eda05009
 -----
-onRez:Gain1Hand Size-onOpponent||onTrash:Lose1Hand Size-onOpponent-ifActive||atTurnStart:Gain1Credits-duringMyTurn
+whileInPlay:Provide1HandSize-forRunner||atTurnStart:Gain1Credits-duringMyTurn
 +++++
 
 .....
@@ -3641,7 +3633,7 @@ Logos
 -----
 bc0f047c-01b1-427f-a439-d451eda05037
 -----
-whileInstalled:Gain1Hand Size||whileInPlay:Provide1MU
+whileInPlay:Provide1HandSize-forRunner||whileInPlay:Provide1MU
 +++++
 A0B0G0T0:Retrieve1Card-doNotReveal$$ShuffleStack
 .....
@@ -3737,7 +3729,7 @@ Theophilius Bagbiter
 -----
 bc0f047c-01b1-427f-a439-d451eda05049
 -----
-onInstall:Lose999Credits||atTurnPreEnd:SetTo1Hand Size-perMyCounter{Credits}-duringMyTurn
+onInstall:Lose999Credits||whileInPlay:SetToSpecialHandSize-forRunner
 +++++
 
 .....
@@ -3937,7 +3929,7 @@ Leprechaun
 -----
 bc0f047c-01b1-427f-a439-d451eda06019
 -----
-onInstall:Put5DaemonMU-isSilent
+onInstall:Put6DaemonMU-isSilent
 +++++
 A0B0G0T0:PossessTarget-Targeted-atProgram-targetMine
 .....
@@ -4105,7 +4097,7 @@ Ghost Runner
 -----
 bc0f047c-01b1-427f-a439-d451eda06040
 -----
-onInstall:Put3Credits||whileRunning:Reduce#CostAll-affectsAll-forMe-trashCost-ifEmpty
+onInstall:Put3Credits$$ReserveMyself||whileRunning:Reduce#CostAll-affectsAll-forMe-trashCost-ifEmpty
 +++++
 
 .....
@@ -4169,7 +4161,7 @@ Crisium Grid
 -----
 bc0f047c-01b1-427f-a439-d451eda06048
 -----
-
+atJackOut:Remove999Enabled
 +++++
 A0B0G0T0:Put1Enabled
 .....
@@ -4225,7 +4217,7 @@ BOX-E
 -----
 bc0f047c-01b1-427f-a439-d451eda06055
 -----
-whileInstalled:Gain2Hand Size||whileInPlay:Provide2MU
+whileInPlay:Provide2HandSize-forRunner||whileInPlay:Provide2MU
 +++++
 
 .....
@@ -4377,7 +4369,7 @@ Origami
 -----
 bc0f047c-01b1-427f-a439-d451eda06074
 -----
-whileInstalled:CustomScript
+whileInPlay:ProvideSpecialHandSize-forRunner
 +++++
 
 .....
@@ -4393,9 +4385,9 @@ Autoscripter
 -----
 bc0f047c-01b1-427f-a439-d451eda06076
 -----
-whileInPlay:Gain1Clicks-foreachCardInstalled-typeProgram-onlyOnce-duringMyTurn||atJackOut:TrashMyself-ifUnsuccessfulRunAny
+atJackOut:TrashMyself-ifUnsuccessfulRunAny
 +++++
-
+A0B0G0T0:Gain1Clicks-onlyOnce
 .....
 Switchblade
 -----
@@ -4833,7 +4825,7 @@ The Board
 -----
 bc0f047c-01b1-427f-a439-d451eda07011
 -----
-onTrash:ScoreMyself-onOpponent-ifAccessed-ifUnscored-preventTrash-runTrashScriptWhileInactive$$Gain2Agenda Points-onOpponent-ifAccessed-ifUnscored$$Put2Scored-isSilent-ifAccessed-ifUnscored
+onTrash:ScoreMyself-onOpponent-ifAccessed-ifUnscored-preventTrash-runTrashScriptWhileInactive-explicitTrash$$Gain2Agenda Points-onOpponent-ifAccessed-ifUnscored-explicitTrash$$Put2Scored-isSilent-ifAccessed-ifUnscored-explicitTrash
 +++++
 
 .....
@@ -4985,7 +4977,7 @@ Valencia Estevez
 -----
 bc0f047c-01b1-427f-a439-d451eda07030
 -----
-onStartup:Gain1Bad Publicity-onOpponent
+onStartup:SetTo1Bad Publicity-onOpponent
 +++++
 
 .....
@@ -5025,7 +5017,7 @@ Wanton Destruction
 -----
 bc0f047c-01b1-427f-a439-d451eda07035
 -----
-onPlay:RunHQ||atSuccessfulRun:CustomScript-isAlternativeRunResult-isOptional-ifSuccessfulRunHQ$$TrashMyself-ifSuccessfulRunR&D-isSilent
+onPlay:RunHQ||atSuccessfulRun:CustomScript-isAlternativeRunResult-isOptional-ifSuccessfulRunHQ$$TrashMyself-ifSuccessfulRunHQ-isSilent
 +++++
 
 .....
@@ -5065,9 +5057,9 @@ Eater
 -----
 bc0f047c-01b1-427f-a439-d451eda07040
 -----
-
+atJackOut:Remove999Fed
 +++++
-A0B1G0T0:SimplyAnnounce{break ICE subroutine}$$Put1Fed||A0B1G0T0:Put1PlusOne||atJackOut:Remove999Fed
+A0B1G0T0:SimplyAnnounce{break ICE subroutine}$$Put1Fed||A0B1G0T0:Put1PlusOne
 .....
 Gravedigger
 -----
@@ -5099,7 +5091,7 @@ bc0f047c-01b1-427f-a439-d451eda07044
 -----
 
 +++++
-A0B0G0T0:ExileTarget-DemiAutoTargeted-choose1-fromArchives
+A0B0G0T0:ExileTarget-DemiAutoTargeted-choose1-fromArchives-targetOpponents
 .....
 Chop Bot 3000
 -----
@@ -5186,6 +5178,1558 @@ Data Folding
 bc0f047c-01b1-427f-a439-d451eda07055
 -----
 atTurnStart:Gain1Credits-ifIHave2MU-duringMyTurn
++++++
+
+.....
+Clot
+-----
+bc0f047c-01b1-427f-a439-d451eda08001
+-----
+whileInPlay:TrashMyself-foreachVirusPurged
++++++
+
+.....
+Paige Piper
+-----
+bc0f047c-01b1-427f-a439-d451eda08002
+-----
+
++++++
+A0B0G0T0:CustomScript-onlyOnce
+.....
+Adjusted Chronotype
+-----
+bc0f047c-01b1-427f-a439-d451eda08003
+-----
+
++++++
+A0B0G0T0:Gain1Clicks-onlyOnce
+.....
+Spike
+-----
+bc0f047c-01b1-427f-a439-d451eda08004
+-----
+ConstantAbility:Cloud2Link
++++++
+A0B0G0T1:SimplyAnnounce{break up to 3 barrier subroutines}
+.....
+Enhanced Vision
+-----
+bc0f047c-01b1-427f-a439-d451eda08005
+-----
+atSuccessfulRun:CustomScript-onlyOnce
++++++
+
+.....
+Gene Conditioning Shoppe
+-----
+bc0f047c-01b1-427f-a439-d451eda08006
+-----
+
++++++
+
+.....
+Synthetic Blood
+-----
+bc0f047c-01b1-427f-a439-d451eda08007
+-----
+whileInPlay:Draw1Cards-forEachMeatDMGTaken-onlyOnce||whileInPlay:Draw1Cards-forEachNetDMGTaken-onlyOnce||whileInPlay:Draw1Cards-forEachBrainDMGTaken-onlyOnce
++++++
+
+.....
+Traffic Jam
+-----
+bc0f047c-01b1-427f-a439-d451eda08008
+-----
+whileInPlay:Increase0Advancement
++++++
+
+.....
+Symmetrical Visage
+-----
+bc0f047c-01b1-427f-a439-d451eda08009
+-----
+whileInPlay:Gain1Credits-foreachCardDrawnClicked-byMe-onlyOnce
++++++
+
+.....
+Brain-Taping Warehouse
+-----
+bc0f047c-01b1-427f-a439-d451eda08010
+-----
+whileInPlay:ReduceSCostRez-affectsICE_and_Bioroid
++++++
+
+.....
+NEXT Gold
+-----
+bc0f047c-01b1-427f-a439-d451eda08011
+-----
+
++++++
+A0B0G0T0:Inflict1NetDamage-perEveryCard-atNEXT-isICE-isRezzed-isSubroutine||A0B0G0T0:TrashMulti-Targeted-atProgram-isSubtourine
+.....
+Jinteki Biotech
+-----
+bc0f047c-01b1-427f-a439-d451eda08012
+-----
+
++++++
+A0B0G0T0:CustomScript
+.....
+Genetic Resequencing
+-----
+bc0f047c-01b1-427f-a439-d451eda08013
+-----
+onScore:Put1Agenda-DemiAutoTargeted-isScored-targetMine-choose1
++++++
+
+.....
+Cortex Lock
+-----
+bc0f047c-01b1-427f-a439-d451eda08014
+-----
+
++++++
+A0B0G0T0:Inflict1NetDamage-perOpponentCounter{MU}-OpCounter-isSubroutine
+.....
+Valley Grid
+-----
+bc0f047c-01b1-427f-a439-d451eda08015
+-----
+
++++++
+A0B0G0T0:Put1Valley Grid-AutoTargeted-atIdentity-targetOpponents-isSilent$$SimplyAnnounce{reduce their maximum hand size until the beggining of your next turn}
+.....
+Bandwidth
+-----
+bc0f047c-01b1-427f-a439-d451eda08016
+-----
+
++++++
+A0B0G0T0:Gain1Tags-onOpponent-isSubroutine$$Put1Bandwidth Logged-AutoTargeted-atIdentity-targetOpponents
+.....
+Predictive Algorithm
+-----
+bc0f047c-01b1-427f-a439-d451eda08017
+-----
+
++++++
+
+.....
+Capital Investors
+-----
+bc0f047c-01b1-427f-a439-d451eda08018
+-----
+
++++++
+A1B0G0T0:Gain2Credits
+.....
+Negotiator
+-----
+bc0f047c-01b1-427f-a439-d451eda08019
+-----
+
++++++
+A0B0G0T0:Gain2Credits-isSubroutine||A0B0G0T0:TrashTarget-Targeted-atProgram-isSubrourine
+.....
+Tech Startup
+-----
+bc0f047c-01b1-427f-a439-d451eda08020
+-----
+
++++++
+A0B0G0T1:Retrieve1Card-grabAsset-toTable$$ShuffleR&D
+.....
+Hacktivist Meeting
+-----
+bc0f047c-01b1-427f-a439-d451eda08021
+-----
+whileInPlay:UseCustomAbility-foreachCardRezzed-typenonICE-byOpponent
++++++
+
+.....
+Off-Campus Apartment
+-----
+bc0f047c-01b1-427f-a439-d451eda08022
+-----
+
++++++
+A1B0G0T0:CustomScript
+.....
+Career Fair
+-----
+bc0f047c-01b1-427f-a439-d451eda08023
+-----
+onPlay:InstallTarget-DemiAutoTargeted-atResource-fromHand-choose1-payCost-reduc3
++++++
+
+.....
+Dorm Computer
+-----
+bc0f047c-01b1-427f-a439-d451eda08024
+-----
+onInstall:Put4Power-isSilent||atJackOut:Remove999preventCounter:Tags
++++++
+A1B0G0T0:Remove1Power-isCost$$RunGeneric$$Put100preventCounter:Tags
+.....
+Hayley Kaplan
+-----
+bc0f047c-01b1-427f-a439-d451eda08025
+-----
+whileInPlay:Pass-foreachCardInstall-typeProgram_or_Hardware_or_Resource-byMe-onlyOnce
++++++
+A0B0G0T0:InstallTarget-DemiAutoTargeted-atnonEvent-fromHand-choose1-payCost
+.....
+Game Day
+-----
+bc0f047c-01b1-427f-a439-d451eda08026
+-----
+onPlay:Draw999Cards
++++++
+
+.....
+Comet
+-----
+bc0f047c-01b1-427f-a439-d451eda08027
+-----
+whileInPlay:Pass-foreachCardPlay-typeEvent-byMe-onlyOnce||whileInPlay:Provide1MU
++++++
+A0B0G0T0:InstallTarget-DemiAutoTargeted-atEvent-fromHand-choose1-payCost
+.....
+Study Guide
+-----
+bc0f047c-01b1-427f-a439-d451eda08028
+-----
+
++++++
+A0B1G0T0:SimplyAnnounce{break code gate subroutine}||A0B2G0T0:Put1Power
+.....
+London Library
+-----
+bc0f047c-01b1-427f-a439-d451eda08029
+-----
+
++++++
+A1B0G0T0:UseCustomAbility
+.....
+Tyson Observatory
+-----
+bc0f047c-01b1-427f-a439-d451eda08030
+-----
+
++++++
+A2B0G0T0:Retrieve1Cards-grabHardware
+.....
+Beach Party
+-----
+bc0f047c-01b1-427f-a439-d451eda08031
+-----
+atTurnStart:Lose1Clicks-duringMyTurn||whileInPlay:Provide5HandSize-forRunner
++++++
+
+.....
+Research Grant
+-----
+bc0f047c-01b1-427f-a439-d451eda08032
+-----
+onScore:ScoreTarget-Targeted-atResearch Grant-isMutedTarget
++++++
+
+.....
+Turing
+-----
+bc0f047c-01b1-427f-a439-d451eda08033
+-----
+
++++++
+A0B0G0T0:RunEnd-isSubroutine
+.....
+Crick
+-----
+bc0f047c-01b1-427f-a439-d451eda08034
+-----
+
++++++
+A0B0G0T0:Retrieve1Cards-fromArchives-toTable-doNotReveal
+.....
+Recruiting Trip
+-----
+bc0f047c-01b1-427f-a439-d451eda08035
+-----
+onPlay:RequestInt-Msg{How many sysops are you recruiting?}$$Lose1Credits-perX-isCost$$Retrieve1Cards-perX-grabSysop$$ShuffleR&D
++++++
+
+.....
+Blacklist
+-----
+bc0f047c-01b1-427f-a439-d451eda08036
+-----
+
++++++
+
+.....
+Gutenberg
+-----
+bc0f047c-01b1-427f-a439-d451eda08037
+-----
+
++++++
+A0B0G0T0:Trace7-isSubroutine-traceEffects<Gain1Tags-onOpponent,None>
+.....
+Student Loans
+-----
+bc0f047c-01b1-427f-a439-d451eda08038
+-----
+whileRezzed:IncreaseSCostPlay-affectsEvent
++++++
+
+.....
+Meru Mati
+-----
+bc0f047c-01b1-427f-a439-d451eda08039
+-----
+
++++++
+A0B0G0T0:RunEnd-isSubroutine
+.....
+Breaker Bay Grid
+-----
+bc0f047c-01b1-427f-a439-d451eda08040
+-----
+
++++++
+A0B0G0T0:RezTarget-Targeted-isnotICE-payCost-reduc5
+.....
+Immolation Script
+-----
+bc0f047c-01b1-427f-a439-d451eda08041
+-----
+onPlay:RunArchives||atJackOut:TrashMyself-isSilent
++++++
+A0B0G0T0:TrashTarget-Targeted-atICE-isRezzed
+.....
+Skulljack
+-----
+bc0f047c-01b1-427f-a439-d451eda08042
+-----
+onInstall:Inflict1BrainDamage||whileInPlay:Reduce1CostTrash-affectsAll-forMe
++++++
+
+.....
+Turntable
+-----
+bc0f047c-01b1-427f-a439-d451eda08043
+-----
+whileInPlay:Provide1MU
++++++
+A0B0G0T0:CustomScript
+.....
+Chrome Parlor
+-----
+bc0f047c-01b1-427f-a439-d451eda08044
+-----
+
++++++
+A0B0G0T0:Put100protectionAllDMG
+.....
+Titanium Ribs
+-----
+bc0f047c-01b1-427f-a439-d451eda08045
+-----
+onInstall:Inflict2MeatDamage
++++++
+
+.....
+Crowbar
+-----
+bc0f047c-01b1-427f-a439-d451eda08046
+-----
+ConstantAbility:Cloud2Link
++++++
+A0B0G0T1:SimplyAnnounce{break up to 3 code gate subroutines}
+.....
+Net-Ready Eyes
+-----
+bc0f047c-01b1-427f-a439-d451eda08047
+-----
+onInstall:Inflict2MeatDamage
++++++
+A0B0G0T0:Put1PlusOne-DemiAutoTargeted-atIcebreaker-choose1
+.....
+Analog Dreamers
+-----
+bc0f047c-01b1-427f-a439-d451eda08048
+-----
+atSuccessfulRun:CustomScript-isAlternativeRunResult-isOptional-ifSuccessfulRunR&D-hasOrigMarker{Running}||atJackOut:Remove1Running-isSilent
++++++
+A1B0G0T0:RunR&D$$Put1Running
+.....
+Brain Cage
+-----
+bc0f047c-01b1-427f-a439-d451eda08049
+-----
+whileInPlay:Provide3HandSize-forRunner||onInstall:Inflict1BrainDamage
++++++
+
+.....
+Cybernetics Division
+-----
+bc0f047c-01b1-427f-a439-d451eda08050
+-----
+whileInPlay:Steal1HandSize-forRunner||whileInPlay:Steal1HandSize-forCorp
++++++
+
+.....
+Self-Destruct Chips
+-----
+bc0f047c-01b1-427f-a439-d451eda08051
+-----
+whileInPlay:Steal1HandSize-forRunner
++++++
+
+.....
+Lab Dog
+-----
+bc0f047c-01b1-427f-a439-d451eda08052
+-----
+
++++++
+A0B0G0T1:TrashTarget-DemiAutoTargeted-atHardware-isSubroutine-choose1
+.....
+Oaktown Grid
+-----
+bc0f047c-01b1-427f-a439-d451eda08053
+-----
+whileRezzed:IncreaseXCostTrash-affectsAll-forOpponent-perMarker{Power}||atJackOut:Remove999Power
++++++
+A0B0G0T0:Put3Power
+.....
+Ryon Knight
+-----
+bc0f047c-01b1-427f-a439-d451eda08054
+-----
+
++++++
+A0B0G0T1:Inflict1BrainDamage-onOpponent
+.....
+Clairvoyant Monitor
+-----
+bc0f047c-01b1-427f-a439-d451eda08055
+-----
+
++++++
+A0B0G0T0:Psi-psiEffects<Put1Advancement-Targeted++RunEnd,None>-isSubroutine
+.....
+Lockdown
+-----
+bc0f047c-01b1-427f-a439-d451eda08056
+-----
+atTurnEnd:Remove999Power
++++++
+A0B0G0T0:SimplyAnnounce{prevent the runner from drawing cards for the remainder of this turn}-isSubroutine$$Put1Power-isSilent
+.....
+Little Engine
+-----
+bc0f047c-01b1-427f-a439-d451eda08057
+-----
+
++++++
+A0B0G0T0:RunEnd-isSubroutine||A0B0G0T0:Gain5Credits-onOpponent-isSubroutine
+.....
+Oaktown Renovation
+-----
+bc0f047c-01b1-427f-a439-d451eda08058
+-----
+onAdvance:Gain2Credits$$Gain1Credits-ifOrigmarkers{Advancement}ge5
++++++
+
+.....
+Corporate Town
+-----
+bc0f047c-01b1-427f-a439-d451eda08059
+-----
+onRez:ExileTarget-DemiAutoTargeted-targetMine-isScored-choose1||atTurnStart:TrashTarget-Targeted-atResource-duringMyTurn-isMutedTarget
++++++
+
+.....
+Quicksand
+-----
+bc0f047c-01b1-427f-a439-d451eda08060
+-----
+
++++++
+A0B0G0T0:Put1Power||A0B0G0T0:RunEnd-isSubroutine
+.....
+Faust
+-----
+bc0f047c-01b1-427f-a439-d451eda08061
+-----
+
++++++
+A0B0G0T0:TrashTarget-DemiAutoTargeted-fromHand-choose1-isCost$$SimplyAnnounce{Break ICE Subtourine}||A0B0G0T0:TrashTarget-DemiAutoTargeted-fromHand-choose1-isCost$$Put2PlusOne
+.....
+Street Peddler
+-----
+bc0f047c-01b1-427f-a439-d451eda08062
+-----
+onInstall:CustomScript
++++++
+
+.....
+Armand "Geist" Walker
+-----
+bc0f047c-01b1-427f-a439-d451eda08063
+-----
+
++++++
+A0B0G0T0:Draw1Card
+.....
+Drive By
+-----
+bc0f047c-01b1-427f-a439-d451eda08064
+-----
+onPlay:ExposeTarget-Targeted-isUnrezzed
++++++
+A0B0G0T0:TrashTarget-Targeted-atAsset_or_Upgrade
+.....
+Forger
+-----
+bc0f047c-01b1-427f-a439-d451eda08065
+-----
+whileInstalled:Gain1Base Link
++++++
+A0B0G0T1:Lose1Tags
+.....
+Shiv
+-----
+bc0f047c-01b1-427f-a439-d451eda08066
+-----
+ConstantAbility:Cloud2Link
++++++
+A0B0G0T1:SimplyAnnounce{Break up to 3 sentry subroutines}
+.....
+Gang Sign
+-----
+bc0f047c-01b1-427f-a439-d451eda08067
+-----
+whileInPlay:CustomScript-foreachAgendaScored
++++++
+
+.....
+Muertos Gang Member
+-----
+bc0f047c-01b1-427f-a439-d451eda08068
+-----
+onInstall:CustomScript
++++++
+A0B0G0T1:Draw1Cards
+.....
+Chameleon
+-----
+bc0f047c-01b1-427f-a439-d451eda08069
+-----
+onInstall:CustomScript||atTurnEnd:UninstallMyself
++++++
+A0B1G0T0:SimplyAnnounce{Break subroutine of the named subtype}
+.....
+Hyperdriver
+-----
+bc0f047c-01b1-427f-a439-d451eda08070
+-----
+
++++++
+A0B0G0T0:ExileMyself$$Gain3Clicks
+.....
+Test Ground
+-----
+bc0f047c-01b1-427f-a439-d451eda08071
+-----
+
++++++
+A0B0G0T1:DerezMulti-Targeted-isRezzed-TargetMine
+.....
+Defective Brainchips
+-----
+bc0f047c-01b1-427f-a439-d451eda08072
+-----
+whileInPlay:Inflict1BrainDamage-forEachBrainDMGTaken-onlyOnce
++++++
+
+.....
+Allele Repression
+-----
+bc0f047c-01b1-427f-a439-d451eda08073
+-----
+
++++++
+A0B0G0T1:CustomScript
+.....
+Marcus Batty
+-----
+bc0f047c-01b1-427f-a439-d451eda08074
+-----
+
++++++
+A0B0G0T1:Psi-psiEffects<SimplyAnnounce{resolve 1 subroutine on a rezzed ICE protecting this server},None>-isSubroutine
+.....
+Expose
+-----
+bc0f047c-01b1-427f-a439-d451eda08075
+-----
+
++++++
+A0B0G0T1:Lose1Bad Publicity-perMarker{Advancement}
+.....
+Pachinko
+-----
+bc0f047c-01b1-427f-a439-d451eda08076
+-----
+
++++++
+A0B0G0T0:RunEnd-isSubroutine
+.....
+Underway Renovation
+-----
+bc0f047c-01b1-427f-a439-d451eda08077
+-----
+onAdvance:Draw1Card-toTrash-ofOpponent$$Draw1Card-toTrash-ofOpponent-ifOrigmarkers{Advancement}ge4
++++++
+
+.....
+Contract Killer
+-----
+bc0f047c-01b1-427f-a439-d451eda08078
+-----
+
++++++
+A1B0G0T1:Remove2Advancement-isCost$$TrashTarget-DemiAutoTargeted-atConnection-choose1||A1B0G0T1:Remove2Advancement-isCost$$Inflict2MeatDamage-onOpponent
+.....
+Spiderweb
+-----
+bc0f047c-01b1-427f-a439-d451eda08079
+-----
+
++++++
+A0B0G0T0:RunEnd-isSubroutine
+.....
+Underway Grid
+-----
+bc0f047c-01b1-427f-a439-d451eda08080
+-----
+
++++++
+
+.....
+Trope
+-----
+bc0f047c-01b1-427f-a439-d451eda08081
+-----
+atTurnStart:Put1Power-duringMyTurn
++++++
+A1B0G0T0:TrashMulti-AutoTargeted-atEvent_and_nonCurrent-hasntMarker{Scored}$$Retrieve1Card-fromHeap-toDeck-perMarker{Power}$$ShuffleStack$$ExileMyself
+.....
+Spoilers
+-----
+bc0f047c-01b1-427f-a439-d451eda08082
+-----
+whileInPlay:Draw1Card-toTrash-ofOpponent-foreachAgendaScored
++++++
+
+.....
+Drug Dealer
+-----
+bc0f047c-01b1-427f-a439-d451eda08083
+-----
+atTurnStart:Lose1Credits-duringMyTurn||atTurnStart:CustomScript-duringOpponentTurn
++++++
+
+.....
+Rolodex
+-----
+bc0f047c-01b1-427f-a439-d451eda08084
+-----
+onInstall:CustomScript||onTrash:Draw3Cards-toTrash
++++++
+
+.....
+Fan Site
+-----
+bc0f047c-01b1-427f-a439-d451eda08085
+-----
+whileInPlay:ScoreMyself-foreachAgendaScored-hasntMarker{Scored}||whileInPlay:Put1ScorePenalty-isSilent-foreachAgendaScored-hasntMarker{Scored}||whileInPlay:Put1Scored-isSilent-isSilent-foreachAgendaScored-hasntMarker{Scored}
++++++
+
+.....
+Film Critic
+-----
+bc0f047c-01b1-427f-a439-d451eda08086
+-----
+
++++++
+A2B0G0T0:CustomScript
+.....
+Paparazzi
+-----
+bc0f047c-01b1-427f-a439-d451eda08087
+-----
+onInstall:Put101protectionMeatDMG
++++++
+
+.....
+Ronald Five
+-----
+bc0f047c-01b1-427f-a439-d451eda08088
+-----
+whileInPlay:Lose1Clicks-ofOpponent-foreachCardTrashed-byOpponent-typenon{Program}_and_non{Hardware}_and_non{Event}_and_non{Resource}||whileInPlay:Lose1Clicks-ofOpponent-foreachOutofPlayTrashed-byOpponent-typenon{Program}_and_non{Hardware}_and_non{Event}_and_non{Resource}
++++++
+A0B0G0T0:Lose1Clicks-onOpponent
+.....
+Enforcer 1.0
+-----
+bc0f047c-01b1-427f-a439-d451eda08089
+-----
+onRez:ExileTarget-Targeted-isScored
++++++
+A0B0G0T0:TrashTarget-DemiAutoTargeted-atProgram-choose1-isSubroutine||A0B0G0T0:Inflict1BrainDamage-onOpponent-isSubroutine||A0B0G0T0:TrashTarget-DemiAutoTargeted-atConsole-choose1-isSubroutine||A0B0G0T0:TrashMulti-AutoTargeted-atResource_and_Virtual-isSubroutine
+.....
+It's a Trap!
+-----
+bc0f047c-01b1-427f-a439-d451eda08090
+-----
+onExpose:Inflict2NetDamage-onOpponent
++++++
+A0B0G0T0:SimplyAnnounce{force the runner to trash one of their cards}-isSubroutine
+.....
+An Offer You Can't Refuse
+-----
+bc0f047c-01b1-427f-a439-d451eda08091
+-----
+onPlay:CustomScript
++++++
+
+.....
+Haarpsichord Studios
+-----
+bc0f047c-01b1-427f-a439-d451eda08092
+-----
+
++++++
+
+.....
+Award Bait
+-----
+bc0f047c-01b1-427f-a439-d451eda08093
+-----
+onAccess:UseCustomAbility-isOptional-worksInArchives
++++++
+
+.....
+Explode-a-palooza
+-----
+bc0f047c-01b1-427f-a439-d451eda08094
+-----
+onAccess:Gain5Credits-isOptional-worksInArchives
++++++
+
+.....
+Early Premiere
+-----
+bc0f047c-01b1-427f-a439-d451eda08095
+-----
+
++++++
+A0B1G0T0:Put1Advancement-Targeted
+.....
+Casting Call
+-----
+bc0f047c-01b1-427f-a439-d451eda08096
+-----
+onPlay:UseCustomAbility-DemiAutoTargeted-atAgenda-fromHand-choose1||onHostAccess:Gain2Tags-onOpponent
++++++
+
+.....
+Old Hollywood Grid
+-----
+bc0f047c-01b1-427f-a439-d451eda08097
+-----
+
++++++
+
+.....
+Hollywood Renovation
+-----
+bc0f047c-01b1-427f-a439-d451eda08098
+-----
+onAdvance:Put1Advancement-Targeted$$Put1Advancement-Targeted-ifOrigmarkers{Advancement}ge6
++++++
+
+.....
+Back Channels
+-----
+bc0f047c-01b1-427f-a439-d451eda08099
+-----
+onPlay:Gain3Credits-perTargetMarker{Advancement}-Targeted-atnonICE$$TrashTarget-Targeted-atnonICE
++++++
+
+.....
+Vanity Project
+-----
+bc0f047c-01b1-427f-a439-d451eda08100
+-----
+
++++++
+
+.....
+Power to the People
+-----
+bc0f047c-01b1-427f-a439-d451eda08101
+-----
+onPlay:CreateDummy
++++++
+A0B0G0T1:Gain7Credits-onlyforDummy
+.....
+Surfer
+-----
+bc0f047c-01b1-427f-a439-d451eda08102
+-----
+
++++++
+A0B2G0T0:SimplyAnnounce{swap the Barrier ICE being encountered with another ICE before or after it}
+.....
+DDoS
+-----
+bc0f047c-01b1-427f-a439-d451eda08103
+-----
+
++++++
+A0B0G0T1:SimplyAnnounce{prevent the rez of the outermost ICE in all servers}
+.....
+Laramy Fisk
+-----
+bc0f047c-01b1-427f-a439-d451eda08104
+-----
+atSuccessfulRun:Draw1Card-onOpponent-ifSuccessfulRunHQ-onlyOnce-isOptional||atSuccessfulRun:Draw1Card-onOpponent-ifSuccessfulRunR&D-onlyOnce-isOptional||atSuccessfulRun:Draw1Card-onOpponent-ifSuccessfulRunArchives-onlyOnce-isOptional
++++++
+
+.....
+Fisk Investment Seminar
+-----
+bc0f047c-01b1-427f-a439-d451eda08105
+-----
+onPlay:Draw3Cards$$Draw3Cards-onOpponent
++++++
+
+.....
+Bookmark
+-----
+bc0f047c-01b1-427f-a439-d451eda08106
+-----
+
++++++
+A1B0G0T0:CustomScript
+.....
+DaVinci
+-----
+bc0f047c-01b1-427f-a439-d451eda08107
+-----
+atSuccessfulRun:Put1Power
++++++
+A0B0G0T1:CustomScript
+.....
+Wireless Net Pavilion
+-----
+bc0f047c-01b1-427f-a439-d451eda08108
+-----
+
++++++
+
+.....
+Cybernetics Court
+-----
+bc0f047c-01b1-427f-a439-d451eda08109
+-----
+whileInPlay:Provide4HandSize-forCorp
++++++
+
+.....
+Team Sponsorship
+-----
+bc0f047c-01b1-427f-a439-d451eda08110
+-----
+whileInPlay:CustomScript-isOptional-foreachAgendaScored
++++++
+
+.....
+Chronos Protocol
+-----
+bc0f047c-01b1-427f-a439-d451eda08111
+-----
+
++++++
+
+.....
+Ancestral Imager
+-----
+bc0f047c-01b1-427f-a439-d451eda08112
+-----
+
++++++
+A0B0G0T0:Inflict1NetDamage-onOpponent
+.....
+Genetics Pavilion
+-----
+bc0f047c-01b1-427f-a439-d451eda08113
+-----
+
++++++
+
+.....
+Franchise City
+-----
+bc0f047c-01b1-427f-a439-d451eda08114
+-----
+
++++++
+A0B0G0T0:Gain1Agenda Points$$ScoreMyself$$Put1Scored-isSilent
+.....
+Product Placement
+-----
+bc0f047c-01b1-427f-a439-d451eda08115
+-----
+onAccess:Gain2Credits
++++++
+
+.....
+Worlds Plaza
+-----
+bc0f047c-01b1-427f-a439-d451eda08116
+-----
+
++++++
+A0B0G0T0:CustomScript
+.....
+Public Support
+-----
+bc0f047c-01b1-427f-a439-d451eda08117
+-----
+onRez:Put3Power||atTurnStart:Remove1Power-duringMyTurn||atTurnStart:Gain1Agenda Points-hasntOrigMarker{Power}-ifOrigmarkers{Scored}eq0-duringMyTurn$$ScoreMyself$$Put1Scored-isSilent
++++++
+
+.....
+Tour Guide
+-----
+bc0f047c-01b1-427f-a439-d451eda08118
+-----
+
++++++
+A0B0G0T0:RunEnd-isSubroutine
+.....
+Expo Grid
+-----
+bc0f047c-01b1-427f-a439-d451eda08119
+-----
+
++++++
+A0B0G0T0:Gain1Credits-onlyOnce
+.....
+The Future is Now
+-----
+bc0f047c-01b1-427f-a439-d451eda08120
+-----
+onScore:Retrieve1Cards-doNotReveal$$ShuffleR&D
++++++
+
+.....
+SYNC
+-----
+bc0f047c-01b1-427f-a439-d451eda09001
+-----
+whileInPlay:Increase1CostDeltag-affectsAll-ifAlterDefault||whileInPlay:Reduce2CostTrash-affectsResource-ifAlterFlipped
++++++
+A0B0G0T0:CustomScript
+.....
+New Angeles Sol
+-----
+bc0f047c-01b1-427f-a439-d451eda09002
+-----
+
++++++
+A0B0G0T0:InstallTarget-DemiAutoTargeted-atCurrent_and_Operation-fromHand-choose1-payCost||A0B0G0T0:Retrieve1Cards-fromArchives-grabCurrent_and_Operation-toTable-payCost
+.....
+Spark Agency
+-----
+bc0f047c-01b1-427f-a439-d451eda09003
+-----
+whileInPlay:Lose1Credits-onOpponent-foreachCardRezzed-typeAdvertisement-onlyOnce
++++++
+
+.....
+15 Minutes
+-----
+bc0f047c-01b1-427f-a439-d451eda09004
+-----
+
++++++
+A1B0G0T0:ReworkMyself$$ShuffleR&D
+.....
+Improved Tracers
+-----
+bc0f047c-01b1-427f-a439-d451eda09005
+-----
+
++++++
+
+.....
+Rebranding Team
+-----
+bc0f047c-01b1-427f-a439-d451eda09006
+-----
+
++++++
+
+.....
+Quantum Predictive Model
+-----
+bc0f047c-01b1-427f-a439-d451eda09007
+-----
+onAccess:ScoreMyself-ifTagged1-worksInArchives
++++++
+
+.....
+Lily Lockwell
+-----
+bc0f047c-01b1-427f-a439-d451eda09008
+-----
+onRez:Draw3Cards
++++++
+A1B0G0T0:Lose1Tags-onOpponent-isCost$$UseCustomAbility
+.....
+News Team
+-----
+bc0f047c-01b1-427f-a439-d451eda09009
+-----
+onAccess:UseCustomAbility-worksInArchives
++++++
+
+.....
+Shannon Claire
+-----
+bc0f047c-01b1-427f-a439-d451eda09010
+-----
+
++++++
+A1B0G0T0:UseCustomAbility-isFirstCustom||A0B0G0T1:UseCustomAbility-isSecondCustom||A0B0G0T1:UseCustomAbility-isThirdCustom
+.....
+Victoria Jenkins
+-----
+bc0f047c-01b1-427f-a439-d451eda09011
+-----
+onRez:Lose1Clicks-onOpponent-duringOpponentTurn$$Lose1Max Click-onOpponent||onTrash:Gain1Clicks-onOpponent-duringOpponentTurn-isSilent-ifActive-ifUnscored$$Gain1Max Click-onOpponent-isSilent-ifActive-ifUnscored$$ScoreMyself-onOpponent-ifAccessed-ifUnscored-preventTrash-runTrashScriptWhileInactive-explicitTrash$$Gain2Agenda Points-onOpponent-ifAccessed-ifUnscored-explicitTrash$$Put2Scored-isSilent-ifAccessed-ifUnscored-explicitTrash
++++++
+
+.....
+Reality Threedee
+-----
+bc0f047c-01b1-427f-a439-d451eda09012
+-----
+onRez:Gain1Bad Publicity||atTurnStart:Gain1Credits-duringMyTurn-ifTagged0||atTurnStart:Gain2Credits-duringMyTurn-ifTagged1
++++++
+
+.....
+Archangel
+-----
+bc0f047c-01b1-427f-a439-d451eda09013
+-----
+onAccess:Lose3Credits-isCost-isOptional$$Trace6-isSubroutine-traceEffects<UseCustomAbility,None>
++++++
+A0B0G0T0:Trace6-isSubroutine-traceEffects<UseCustomAbility,None>
+.....
+News Hound
+-----
+bc0f047c-01b1-427f-a439-d451eda09014
+-----
+
++++++
+A0B0G0T0:Trace3-isSubroutine-traceEffects<Gain1Tags-onOpponent,None>||A0B0G0T0:RunEnd
+.....
+Resistor
+-----
+bc0f047c-01b1-427f-a439-d451eda09015
+-----
+
++++++
+A0B0G0T0:Trace4-isSubroutine-traceEffects<RunEnd,None>
+.....
+Special Offer
+-----
+bc0f047c-01b1-427f-a439-d451eda09016
+-----
+
++++++
+A0B0G0T0:Gain5Credits-isSubroutine$$TrashMyself
+.....
+TL;DR
+-----
+bc0f047c-01b1-427f-a439-d451eda09017
+-----
+
++++++
+A0B0G0T0:SimplyAnnounce{duplicate the subs on the next piece of ICE}-isSubroutine
+.....
+Turnpike
+-----
+bc0f047c-01b1-427f-a439-d451eda09018
+-----
+
++++++
+A0B0G0T0:Lose1Credits-onOpponent||A0B0G0T0:Trace5-isSubroutine-traceEffects<Gain1Tags-onOpponent,None>
+.....
+24/7 News Cycle
+-----
+bc0f047c-01b1-427f-a439-d451eda09019
+-----
+onPlay:ExileTarget-Targeted-atAgenda-targetMine-isCost$$UseCustomAbility
++++++
+
+.....
+Ad Blitz
+-----
+bc0f047c-01b1-427f-a439-d451eda09020
+-----
+onPlay:RequestInt-Msg{How many Advertisements do you want to install and rez?}$$Lose1Credits-perX-isCost$$UseCustomAbility
++++++
+
+.....
+Media Blitz
+-----
+bc0f047c-01b1-427f-a439-d451eda09021
+-----
+onPlay:CustomScript
++++++
+
+.....
+The All-Seeing I
+-----
+bc0f047c-01b1-427f-a439-d451eda09022
+-----
+onPlay:CustomScript-ifTagged1
++++++
+
+.....
+Surveillance Sweep
+-----
+bc0f047c-01b1-427f-a439-d451eda09023
+-----
+
++++++
+
+.....
+Keegan Lane
+-----
+bc0f047c-01b1-427f-a439-d451eda09024
+-----
+
++++++
+A0B0G0T1:Lose1Tags-onOpponent-isCost$$TrashTarget-DemiAutoTargeted-atProgram-choose1
+.....
+Rutherford Grid
+-----
+bc0f047c-01b1-427f-a439-d451eda09025
+-----
+
++++++
+
+.....
+Global Food Initiative
+-----
+bc0f047c-01b1-427f-a439-d451eda09026
+-----
+onLiberation:Lose1Agenda Points-onOpponent
++++++
+
+.....
+Launch Campaign
+-----
+bc0f047c-01b1-427f-a439-d451eda09027
+-----
+onRez:Put6Credits||atTurnStart:Transfer2Credits-duringMyTurn$$TrashMyself-ifEmpty
++++++
+
+.....
+Assassin
+-----
+bc0f047c-01b1-427f-a439-d451eda09028
+-----
+
++++++
+A0B0G0T0:Trace5-traceEffects<Inflict3NetDamage-onOpponent,None>-isSubroutine||A0B0G0T0:Trace4-traceEffects<TrashTarget-DemiAutoTargeted-atProgram-choose1,None>-isSubroutine
+.....
+Apex
+-----
+bc0f047c-01b1-427f-a439-d451eda09029
+-----
+
++++++
+A0B0G0T0:CustomScript
+.....
+Apocalypse
+-----
+bc0f047c-01b1-427f-a439-d451eda09030
+-----
+onPlay:TrashMulti-AutoTargeted-atICE_or_Upgrade_or_Asset_or_Agenda-isUnscored$$ApexFlipMulti-AutoTargeted-atProgram_or_Resource_or_Hardware-isSilent
++++++
+
+.....
+Prey
+-----
+bc0f047c-01b1-427f-a439-d451eda09031
+-----
+onPlay:RunGeneric
++++++
+A0B0G0T0:TrashMulti-Targeted-targetMine$$TrashTarget-Targeted-atICE-isRezzed
+.....
+Heartbeat
+-----
+bc0f047c-01b1-427f-a439-d451eda09032
+-----
+whileInPlay:Provide1MU||onDamage:TrashTarget-DemiAutoTargeted-targetMine-isCost-choose1$$Put1protectionAllDMG
++++++
+A0B0G0T0:TrashTarget-DemiAutoTargeted-targetMine-isCost-choose1$$Put1protectionAllDMG
+.....
+Endless Hunger
+-----
+bc0f047c-01b1-427f-a439-d451eda09033
+-----
+
++++++
+A0B0G0T0:TrashTarget-DemiAutoTargeted-targetMine-isCost$$SimplyAnnounce{break one End The Run subroutine}
+.....
+Harbinger
+-----
+bc0f047c-01b1-427f-a439-d451eda09034
+-----
+onTrash:ApexFlipMyself-preventTrash
++++++
+
+.....
+Hunting Grounds
+-----
+bc0f047c-01b1-427f-a439-d451eda09035
+-----
+
++++++
+A0B0G0T0:SimplyAnnounce{prevent one When Encountered ability}-onlyOnce||A0B0G0T1:UseCustomAbility
+.....
+Wasteland
+-----
+bc0f047c-01b1-427f-a439-d451eda09036
+-----
+whileInPlay:Gain1Credits-foreachCardTrashed-typeProgram_or_Hardware_or_Resource_or_Event-byMe-onlyOnce
++++++
+A0B0G0T0:Gain1Credits-onlyOnce
+.....
+Adam
+-----
+bc0f047c-01b1-427f-a439-d451eda09037
+-----
+
++++++
+
+.....
+Independent Thinking
+-----
+bc0f047c-01b1-427f-a439-d451eda09038
+-----
+onPlay:CustomScript
++++++
+
+.....
+Brain Chip
+-----
+bc0f047c-01b1-427f-a439-d451eda09039
+-----
+whileInPlay:ProvideSpecialHandSize-forRunner||whileInPlay:SetToSpecialMU
++++++
+
+.....
+Multithreader
+-----
+bc0f047c-01b1-427f-a439-d451eda09040
+-----
+onInstall:Put2Credits-isSilent||whileInstalled:Reduce#CostUse-affectsProgram-forMe||atTurnPreStart:Refill2Credits-duringMyTurn
++++++
+
+.....
+Always Be Running
+-----
+bc0f047c-01b1-427f-a439-d451eda09041
+-----
+
++++++
+A0B0G0T0:Lose2Clicks-isCost$$SimplyAnnounce{break ICE subroutine}-onlyOnce
+.....
+Dr. Lovegood
+-----
+bc0f047c-01b1-427f-a439-d451eda09042
+-----
+
++++++
+A0B0G0T0:Put1Feelgood-DemiAutoTargeted-targetMine-atProgram_or_Hardware_or_Resource-choose1-onlyOnce
+.....
+Neutralize All Threats
+-----
+bc0f047c-01b1-427f-a439-d451eda09043
+-----
+
++++++
+
+.....
+Safety First
+-----
+bc0f047c-01b1-427f-a439-d451eda09044
+-----
+whileInPlay:Steal2HandSize-forRunner||atTurnEnd:CustomScript-duringMyTurn
++++++
+
+.....
+Sunny Lebeau
+-----
+bc0f047c-01b1-427f-a439-d451eda09045
+-----
+
++++++
+
+.....
+Security Chip
+-----
+bc0f047c-01b1-427f-a439-d451eda09046
+-----
+
++++++
+A0B0G0T1:Put1PlusOne-Targeted-atIcebreaker-perMyCounter{Base Link}
+.....
+Security Nexus
+-----
+bc0f047c-01b1-427f-a439-d451eda09047
+-----
+whileInPlay:Provide1MU||whileInstalled:Gain1Base Link
++++++
+A0B0G0T0:CustomScript
+.....
+GS Striker M1
+-----
+bc0f047c-01b1-427f-a439-d451eda09048
+-----
+ConstantAbility:Cloud2Link
++++++
+A0B2G0T0:SimplyAnnounce{break any number of code gate subroutines}||A0B2G0T0:Put3PlusOne
+.....
+GS Shrike M2
+-----
+bc0f047c-01b1-427f-a439-d451eda09049
+-----
+ConstantAbility:Cloud2Link
++++++
+A0B2G0T0:SimplyAnnounce{break any number of sentry subroutines}||A0B2G0T0:Put3PlusOne
+.....
+GS Sherman M3
+-----
+bc0f047c-01b1-427f-a439-d451eda09050
+-----
+ConstantAbility:Cloud2Link
++++++
+A0B2G0T0:SimplyAnnounce{break any number of barrier subroutines}||A0B2G0T0:Put3PlusOne
+.....
+Globalsec Security Clearance
+-----
+bc0f047c-01b1-427f-a439-d451eda09051
+-----
+
++++++
+A1B0G0T0:CustomScript
+.....
+Jak Sinclair
+-----
+bc0f047c-01b1-427f-a439-d451eda09052
+-----
+onPay:Reduce1CostAll-perMyCounter{Base Link}
++++++
+A0B0G0T0:RunGeneric-onlyOnce
+.....
+Employee Strike
+-----
+bc0f047c-01b1-427f-a439-d451eda09053
+-----
+
++++++
+
+.....
+Windfall
+-----
+bc0f047c-01b1-427f-a439-d451eda09054
+-----
+onPlay:CustomScript
++++++
+
+.....
+Technical Writer
+-----
+bc0f047c-01b1-427f-a439-d451eda09055
+-----
+whileInPlay:Put1Credit-foreachCardInstall-typeProgram_or_Hardware
++++++
+A1B0G0T1:Transfer999Credits
+.....
+Run Amok
+-----
+bc0f047c-01b1-427f-a439-d451eda10001
+-----
+onPlay:RunGeneric
++++++
+A0B0G0T1:TrashTarget-Targeted-atICE
+.....
+Ramujan-reliant 550 BMI
+-----
+bc0f047c-01b1-427f-a439-d451eda10002
+-----
+onDamage:Put1protectionNetBrainDMG-trashCost-excludeDummy-perEveryCard-atRamujan-reliant 550 BMI$$TrashMyself-isSilent
++++++
+A0B0G0T1:CreateDummy-with1protectionNetBrainDMG-perEveryCard-atRamujan-reliant 550 BMI
+.....
+Street Magic
+-----
+bc0f047c-01b1-427f-a439-d451eda10003
+-----
+
++++++
+
+.....
+High-stakes Job
+-----
+bc0f047c-01b1-427f-a439-d451eda10004
+-----
+onPlay:RunGeneric||atSuccessfulRun:Gain12Credits||atJackOut:TrashMyself-isSilent
++++++
+
+.....
+Mongoose
+-----
+bc0f047c-01b1-427f-a439-d451eda10005
+-----
+
++++++
+A0B1G0T0:SimplyAnnounce{break up to 2 sentry subroutines}||A0B2G0T0:Put2PlusOne
+.....
+Jesminder Sareen
+-----
+bc0f047c-01b1-427f-a439-d451eda10006
+-----
+
++++++
+A0B0G0T0:Lose1Tags-onlyOnce
+.....
+Maya
+-----
+bc0f047c-01b1-427f-a439-d451eda10007
+-----
+whileInPlay:Provide2MU
++++++
+
+.....
+Panchatantra
+-----
+bc0f047c-01b1-427f-a439-d451eda10008
+-----
+
++++++
+A0B0G0T2:SimplyAnnounce{Give the encountered ICE a new subtype}
+.....
+Artist Colony
+-----
+bc0f047c-01b1-427f-a439-d451eda10009
+-----
+
++++++
+A0B0G0T0:ExileTarget-Targeted-isScored-isCost$$Retrieve1Cards-grabnonEvent-toTable-payCost
+.....
+Chatterjee University
+-----
+bc0f047c-01b1-427f-a439-d451eda10010
+-----
+
++++++
+A1B0G0T0:Put1Power||A1B0G0T0:UseCustomAbility$$Remove1Power
+.....
+Advanced Concept Hopper
+-----
+bc0f047c-01b1-427f-a439-d451eda10011
+-----
+atRunStart:CustomScript
++++++
+
+.....
+Vikram 1.0
+-----
+bc0f047c-01b1-427f-a439-d451eda10012
+-----
+
++++++
+A0B0G0T0:SimplyAnnounce{prevent the runner from using any programs for the remainder of this run}-isSubroutine||A0B0G0T0:Trace4-isSubroutine-traceEffects<Inflict1BrainDamage-onOpponent,None>
+.....
+Heritage Committee
+-----
+bc0f047c-01b1-427f-a439-d451eda10013
+-----
+onPlay:Draw3Cards$$ReworkTarget-DemiAutoTargeted-choose1-fromHand
++++++
+
+.....
+Mumbad City Grid
+-----
+bc0f047c-01b1-427f-a439-d451eda10014
+-----
+
++++++
+A0B0G0T0:SimplyAnnounce{swap the passed ICE with another piece of ice on this server}
+.....
+Kala Ghoda Real TV
+-----
+bc0f047c-01b1-427f-a439-d451eda10015
+-----
+atTurnStart:CustomScript-duringMyTurn
++++++
+A0B0G0T1:Draw1Card-toTrash-ofOpponent
+.....
+Interrupt 0
+-----
+bc0f047c-01b1-427f-a439-d451eda10016
+-----
+atJackOut:Remove999Interrupt
++++++
+A0B0G0T0:Put1Interrupt-isSilent$$SimplyAnnounce{force the runner to pay 1 credit as an additional cost each time they use an icebreaker to break at least 1 subroutine}
+.....
+Dedication Ceremony
+-----
+bc0f047c-01b1-427f-a439-d451eda10017
+-----
+onPlay:Put3Advancement-DemiAutoTargeted-atICE_or_Asset_or_Upgrade-isRezzed-choose1
++++++
+
+.....
+Mumba Temple
+-----
+bc0f047c-01b1-427f-a439-d451eda10018
+-----
+onRez:Put2Credits||atTurnPreStart:Refill2Credits-duringMyTurn||whileRezzed:Reduce#CostRez-affectsAll-forMe
++++++
+
+.....
+Museum of History
+-----
+bc0f047c-01b1-427f-a439-d451eda10019
+-----
+atTurnStart:Retrieve1Card-fromArchives-toDeck-doNotReveal-duringMyTurn-isOptional$$ShuffleR&D
 +++++
 
 .....

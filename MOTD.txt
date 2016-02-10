@@ -1,18 +1,21 @@
 =====Message of the Day======
 
-UPDATE: Latest update should address agenda scoring problems and MaxX' ability. Lemme know if they persist.
+Old Holywood is now rezzed
 
-Order and Chaos is now Rezzed!
+:::WARNING::: Division by zero detec--
 
-As always, most cards have been scripted. Check the changelog for tricky scripts. 
+Universe of Tomorrow is also rezzed!
 
-I tried to get this ASAP so there might be some bugs remaining. Please lemme know if you find any
+OH SHI--
 
-Note: Itinerant Protesters and Satellite Grid need *Manual Tracking*
+Data and Destiny is ALSO GODDAMN REZZED!
+APEX, Adam and Sunny are now here to harvest, liberate or link up your world!
 
+*Phew*, that was a ton of work >_<
+Enjoy!
 ---
-If you enjoy my work, please consider becoming my patron by donating a few credits a month. 
-Devs need more Diesel!
+If you enjoy my work, please consider becoming my patron by donating a few credits a month 
+(Press 'Yes' to go to Patreon!)
 =============================
 &&
 http://www.patreon.com/db0

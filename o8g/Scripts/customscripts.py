@@ -297,7 +297,7 @@ def UseCustomAbility(Autoscript, announceText, card, targetCards = None, notific
       if not len(programTargets): 
          notify("{} can find no hardware to trash".format(card))
          return
-      rc = payCost(2, 'not free')
+      rc = payCost(1, 'not free')
       if rc == "ABORT": 
          notify("{} could not pay to use {}".format(me,card))
          return
@@ -351,6 +351,96 @@ def UseCustomAbility(Autoscript, announceText, card, targetCards = None, notific
       notify("{} triggers to clean all viruses from the corporate grid".format(card))
       autoscriptOtherPlayers('VirusPurged',card)
       announceString = ''
+   if fetchProperty(card, 'name') == 'Hacktivist Meeting': 
+      remoteCall(fetchCorpPL(),'HacktivistMeeting',[card])
+      announceString = ''
+   if fetchProperty(card, 'name') == 'London Library': 
+      handTargets = [c for c in me.hand if c.targetedBy and c.targetedBy == me and c.Type == 'Program' and not re.search(r'Virus', getKeywords(c))]
+      tableTargets = [c for c in table if findMarker(c, 'London Library') and c.targetedBy and c.targetedBy == me ]
+      if len(handTargets):
+         hostMe(handTargets[0],card)
+         TokensX('Put1London Library-isSilent', "", handTargets[0])
+         announceString = "{} host {} in the {}".format(announceText,handTargets[0],card)
+      elif len(tableTargets):
+         uninstall(tableTargets[0], silent = True)
+         announceString = "{} uninstall {} from the {}".format(announceText,tableTargets[0],card)
+      else:
+         whisper(":::ERROR::: Please target a card to host or uninstall for the {}".format(card))
+         announceString = ''
+   if fetchProperty(card, 'name') == "Award Bait":
+      notify(':> {} is thinking where to add the  {} advancement...'.format(card,me))
+      whisper(":::INFO::: Double click on a card you control to add an advancement counter")
+      hijackDefaultAction.append(card)
+      showHijackQueue()
+      announceString = ''
+   if fetchProperty(card, 'name') == 'Casting Call':
+      agenda = targetCards[0]
+      agenda.moveToTable(0,0)
+      card.moveToTable(0,0)
+      placeCard(agenda, 'INSTALL')
+      hostMe(card,agenda)
+      notify("{} installs {} using a {}".format(me,agenda,card))
+      announceString = ''
+   if fetchProperty(card, 'name') == 'Lily Lockwell':
+      opCard = RetrieveX('Retrieve1Cards-grabOperation', announceText, card)
+      deck.shuffle()
+      if not len(opCard[1]):
+         notify('{} had no Operations to retrieve with {}'.format(me,card))
+         announceString = ''
+      else:
+         changeCardGroup(opCard[1][0],me.piles['R&D/Stack'])
+         announceString = "{} put {} on top of their shuffled R&D".format(announceText,opCard[1][0].Name)
+   if fetchProperty(card, 'name') == 'News Team':
+      remoteCall(fetchRunnerPL(),'NewsTeam',[card])
+      announceString = ''
+   if fetchProperty(card, 'name') == "Shannon Claire":
+      if re.search(r'-isFirstCustom',Autoscript): 
+         me.piles['R&D/Stack'].bottom().moveTo(me.hand)
+         announceString = announceText + " draw the bottom card from their R&D"
+      elif re.search(r'-isSecondCustom',Autoscript): 
+         opCard = RetrieveX('Retrieve1Cards-grabAgenda', announceText, card)
+         deck.shuffle()
+         if not len(opCard[1]):
+            notify('{} had no Agendas in R&D to retrieve with {}'.format(me,card))
+            announceString = ''
+         else:
+            changeCardGroup(opCard[1][0],me.piles['R&D/Stack'],True)
+            announceString = "{} put {} on the bottom of their shuffled R&D".format(announceText,opCard[1][0].Name)
+      elif re.search(r'-isThirdCustom',Autoscript): 
+         opCard = RetrieveX('Retrieve1Cards-grabAgenda-fromArchives', announceText, card)
+         if not len(opCard[1]):
+            notify('{} had no Agendas in Archives to retrieve with {}'.format(me,card))
+            announceString = ''
+         else:
+            changeCardGroup(opCard[1][0],me.piles['R&D/Stack'],True)
+            announceString = "{} put {} on the bottom of their shuffled R&D".format(announceText,opCard[1][0].Name)
+   if fetchProperty(card, 'name') == "24/7 News Cycle":
+      scoredAgendas = [c for c in table if c.Type == 'Agenda' and c.markers[mdict['Scored']] and c.controller == me]
+      if not len(scoredAgendas): 
+         whisper("You need a scored agenda to use with {}".format(card))
+         return ''
+      elif len(scoredAgendas) == 1: chosenAgenda = scoredAgendas[0]
+      else: 
+         choice = SingleChoice('Choose one of your agendas with a "when scored" ability to resolve', makeChoiceListfromCardList(scoredAgendas))
+         if choice == None: return ''
+         chosenAgenda = scoredAgendas[choice]
+      executePlayScripts(chosenAgenda,'SCORE')
+      announceString = "{} resolve the ability of {}".format(announceText,chosenAgenda)
+   if fetchProperty(card, 'name') == "Ad Blitz":
+      for iter in range(n): # n should be the number provided by the player
+         if SingleChoice('Install {} advertisement from Archives or HQ? ({}/{})'.format(numOrder(iter),iter+1,n),['Archives','HQ']) == 0:
+            RetrieveX('Retrieve1Card-grabAdvertisement-fromArchives-toTable-rezPay', announceText, card)
+         else: 
+            ModifyStatus('InstallTarget-rezPay', announceText, card,findTarget('DemiAutoTargeted-atAdvertisement-choose1-fromHand'))
+      announceString = "{} install and rez {} advertisements".format(announceText,n)
+   if fetchProperty(card, 'name') == "Archangel":
+      remoteCall(fetchCorpPL(),'Archangel',[card])
+   if fetchProperty(card, 'name') == "Hunting Grounds":
+      for c in deck.top(3):
+         placeCard(c, action = 'INSTALL', type = 'Apex')
+      announceString = "{} increase their apetite...".format(announceText)
+   if fetchProperty(card, 'name') == "Chatterjee University":  
+      announceString = ModifyStatus('InstallTarget-payCost-reduc{}'.format(card.markers[mdict['Power']]),announceText,card,findTarget('DemiAutoTargeted-atProgram-fromHand-choose1'))
    return announceString
  
 #------------------------------------------------------------------------------
@@ -620,10 +710,10 @@ def CustomScript(card, action = 'PLAY', origin_card = None, original_action = No
          del cardChoices[:]
          del cardTexts[:]
          for c in installableCards:
-            if c.Rules not in cardTexts: # we don't want to provide the player with a the same card as a choice twice.
+            if (c.Rules,c.group) not in cardTexts: # we don't want to provide the player with a the same card as a choice twice.
                debugNotify("Appending card", 4)
                cardChoices.append(c)
-               cardTexts.append(c.Rules)
+               cardTexts.append((c.Rules,c.group))
          choice = SingleChoice("Choose {} card to install in the pet project".format(numOrder(iter)), makeChoiceListfromCardList(cardChoices, includeGroup = True), [], 'Cancel')
          debugNotify("choice = {}".format(choice))
          if choice == None: break
@@ -1181,29 +1271,6 @@ def CustomScript(card, action = 'PLAY', origin_card = None, original_action = No
          if c.Type == 'Program': c.moveTo(trash)
          else: c.moveTo(me.hand)
       me.Credits += progs
-   elif fetchProperty(card, 'name') == 'Origami':
-      if action == 'INSTALL':
-         folds = len([c for c in table if c.Name == card.Name])
-         if folds == 1: 
-            me.counters['Hand Size'].value += 1
-            notify("{} starts folding their data and increases their available hand size by 1".format(me))
-         elif folds == 2:
-            me.counters['Hand Size'].value += 3
-            notify("{} intensifies their data folding and doubles their storage, increasing their hand size by 3.".format(me))
-         elif folds == 3:
-            me.counters['Hand Size'].value += 5
-            notify("{} has perfectly folder their data and triples their results, increasing their hand size by 5.".format(me))
-      elif action == 'TRASH' or action == 'UNINSTALL' or action == 'EXILE':
-         folds = len([c for c in table if c.Name == card.Name])
-         if folds == 1: # We run trash scripts before we remove cards from the table, so the minimum is going to be 1 origami on the table
-            me.counters['Hand Size'].value -= 1
-            notify(":> {}'s data folding is interrupted reducing their available hand size by 1".format(me))
-         elif folds == 2:
-            me.counters['Hand Size'].value -= 3
-            notify(":> {} disrupts their data folding and halves their storage, decreasing hand size by 3.".format(me))
-         elif folds == 3:
-            me.counters['Hand Size'].value -= 5
-            notify(":> {}'s perfect folds are ruined! Their hand size decreases by 5.".format(me))
    elif fetchProperty(card, 'name') == 'Bifrost Array' and action == 'SCORE': 
       targetAgenda = findTarget('DemiAutoTargeted-atAgenda_and_notBifrost Array-isScored-choose1')
       if len(targetAgenda) and confirm("Do you want to use the optional ability of Bifrost Array?"):
@@ -1258,6 +1325,308 @@ def CustomScript(card, action = 'PLAY', origin_card = None, original_action = No
    elif fetchProperty(card, 'name') == "Vigil" and action == 'Start':
       corpPL = fetchCorpPL()
       if len(corpPL.hand) == corpPL.counters['Hand Size'].value: DrawX('Draw1Card', '{} uses {}'.format(me,card), card, targetCards = None, notification = 'Quick', n = 0)
+   elif fetchProperty(card, 'name') == "Enhanced Vision" and action == 'SuccessfulRun':
+      rndCard = fetchCorpPL().hand.random()
+      notify(":> The runner's {} glimpses a {} inside the corp HQ".format(card,rndCard.Name))
+   elif fetchProperty(card, 'name') == "Paige Piper" and action == 'USE':
+      freshInstalls = [c for c in table if c.highlight == NewCardColor and c.controller == me and c.Type != 'Event']
+      if not len(freshInstalls):
+         whisper("You need to install a card first before you use this ability")
+         return 'ABORT'
+      else:
+         freshCard = freshInstalls[0]
+         foundCards = []
+         for c in deck:
+            if c.Name == freshCard.Name: foundCards.append(c)
+         if len(foundCards):
+            count = askInteger("We have found {} copies of {} in your deck, how many do you want to Trash?".format(len(foundCards),freshCard.Name),len(foundCards))
+            if not count: notify(":> {}'s {} checked how many copies of {} they still have in their deck but chose to trash none of them".format(me,card,freshCard))
+            else:
+               if count > len(foundCards): count = len(foundCards)
+               for iter in range(count):
+                  changeCardGroup(foundCards.pop(),trash)
+               notify(":> {}'s {} trashed {} copies of {} from their deck".format(me,card,count,freshCard))
+         else:
+            confirm("You have no further copies in your deck. This is a pause to avoid giving away this information to the corp. Press any button to continue")
+            notify(":> {}'s {} checked how many copies of {} they still have in their deck but chose to trash none of them".format(me,card,freshCard))
+         deck.shuffle()
+   elif fetchProperty(card, 'name') == "Jinteki Biotech" and action == 'USE':
+      if me.getGlobalVariable('TripleID') == 'None':
+         notify(":> {} is selecting their {} department".format(me,card))
+         choiceDict = {0: 'brewery', 1: 'tank', 2: 'greenhouse'}
+         choice = SingleChoice("Which department of {} would you like to use today?".format(card.Name),['The Brewery\n(Do 2 net damage.)','The Tank\n(Shuffle Archives into R&D)','The Greenhouse\n(Place 4 advancement tokens)'],cancelButton = False)
+         me.setGlobalVariable('TripleID',choiceDict.get(choice))
+         notify(":> {}'s {} department is now set.".format(me,card))
+      else:
+         clickCost = useClick(count = 3)
+         if clickCost == 'ABORT': return 'ABORT'
+         if me.getGlobalVariable('TripleID') == 'greenhouse':
+            targetCards = findTarget('Targeted')
+            if not len(targetCards): 
+               whisper(":::ERROR::: Target a card before you try to advance it")
+               return 'ABORT'
+         card.switchTo(me.getGlobalVariable('TripleID'))
+         if card.alternate == 'brewery': 
+            InflictX('Inflict2NetDamage-onOpponent', '', card)
+            notify("{} reveals {} as their Jinteki Biotech department and uses it to inflict 2 net damage to the runner".format(me,card))
+         if card.alternate == 'tank': 
+            ReshuffleX('ReshuffleArchives', '', card)
+            notify("{} reveals {} as their Jinteki Biotech department and uses it reshuffle their Archves into R&D".format(me,card))
+         if card.alternate == 'greenhouse': 
+            TokensX('Put4Advancement','',card,targetCards)
+            notify("{} reveals {} as their Jinteki Biotech department and uses it to advance {} 4 times".format(me,card,targetCards[0]))               
+   elif fetchProperty(card, 'name') == "Off-Campus Apartment" and action == 'USE':
+      hostCards = eval(getGlobalVariable('Host Cards'))
+      handConnections = [c for c in me.hand if c.targetedBy and c.targetedBy == me and re.search(r'Connection', c.Keywords)]
+      if len(handConnections):
+         connection = handConnections[0] # If they targeted more than one connection for some reason, we only host the first one we see.
+         installedFromGrip = True
+      else:
+         tableConnections = [c for c in table if c.targetedBy and c.targetedBy == me and re.search(r'Connection', c.Keywords) and not hostCards.get(c._id,None) and c.highlight != RevealedColor and c.highlight != InactiveColor and c.highlight != DummyColor]
+         if len(tableConnections):
+            connection = tableConnections[0] # If they targeted more than one connection for some reason, we only host the first one we see.
+            installedFromGrip = False
+         else:
+            connection = None
+      if not connection: notify("Please target an unhosted Connection in your Grip or the table before using this action")
+      else:
+         payTXT = ''
+         if installedFromGrip:
+            if useClick() == 'ABORT': return 'ABORT'
+            cardCost = num(fetchProperty(connection, 'Cost'))
+            reduction = reduceCost(connection, 'INSTALL', cardCost, dryRun = True)
+            rc = payCost(cardCost - reduction, "not free")
+            if rc == 'ABORT': return 'ABORT' # If the cost couldn't be paid, we don't proceed.
+            reduceCost(connection, 'INSTALL', cardCost) # If the cost could be paid, we finally take the credits out from cost reducing cards.
+            if reduction: reduceTXT = ' (reduced by {})'.format(reduction)
+            else: reduceTXT = ''
+            payTXT = ' paying {}{}'.format(uniCredit(cardCost), reduceTXT)
+         hostMe(connection,card)
+         if installedFromGrip:
+            executePlayScripts(connection,'INSTALL')
+            autoscriptOtherPlayers('CardInstall',connection)
+         if not connection.highlight: connection.highlight = NewCardColor
+         drawMany(deck, 1,silent = True)
+         notify(":> {} uses {} to host {}{} and draw 1 card".format(me,card,connection, payTXT))
+   elif fetchProperty(card, 'name') == "Turntable" and action == 'USE':
+      myAgenda = findTarget('DemiAutoTargeted-atAgenda-targetMine-isScored-isMutedTarget-choose1')
+      opAgenda = findTarget('DemiAutoTargeted-atAgenda-targetOpponents-isScored-isMutedTarget-choose1')
+      if not len(myAgenda) or not len(opAgenda):
+         notify(':::ERROR::: You and your opponent need to have a scored agenda to use this effect')
+         return 'ABORT'
+      myX,myY = myAgenda[0].position
+      opX,opY = opAgenda[0].position
+      opponent = opAgenda[0].controller
+      passCardControl(myAgenda[0],opponent)
+      placeOnTable(myAgenda[0],opX,opY)
+      grabCardControl(opAgenda[0])
+      placeOnTable(opAgenda[0],myX,myY)
+      me.counters['Agenda Points'].value -= num(fetchProperty(myAgenda[0],'Stat'))
+      me.counters['Agenda Points'].value += num(fetchProperty(opAgenda[0],'Stat'))
+      opponent.counters['Agenda Points'].value -= num(fetchProperty(opAgenda[0],'Stat'))
+      opponent.counters['Agenda Points'].value += num(fetchProperty(myAgenda[0],'Stat'))
+      notify("{}'s mad scratches on {} swap their {} for {}'s {}".format(me,card,myAgenda[0],opponent,opAgenda[0]))
+      chkAgendaVictory()
+      remoteCall(opponent,'chkAgendaVictory',[])
+   elif fetchProperty(card, 'name') == "Analog Dreamers" and action == 'SuccessfulRun':
+      reworkTarget = findTarget('Targeted-atAgenda_or_Asset_or_Upgrade-isUnrezzed-hasntMarker{Advancement}')
+      if not len(reworkTarget): 
+         notify(":::ERROR::: No valid target selected to rework with {}. Target a card before using this ability".format(card))
+         return 'ABORT'
+      changeCardGroup(reworkTarget[0],reworkTarget[0].controller.piles['R&D/Stack'])
+      remoteCall(reworkTarget[0].controller,'shuffle',[reworkTarget[0].controller.piles['R&D/Stack']])
+      notify(":> {} trigger to rework {}'s unrezzed card into their R&D".format(me,reworkTarget[0].controller))
+   elif fetchProperty(card, 'name') == "Street Peddler" and action == 'INSTALL':
+      for c in deck.top(3): 
+         hostMe(c,card)
+         TokensX('Put1Peddled-isSilent', "", c)
+         c.highlight = InactiveColor
+   elif fetchProperty(card, 'name') == "Muertos Gang Member":
+      if action == 'INSTALL': remoteCall(fetchCorpPL(),'MuertosGangInstall',[card])
+      elif card.group == table: remoteCall(fetchCorpPL(),'MuertosGangUninstall',[card])
+   elif fetchProperty(card, 'name') == "Chameleon" and action == 'INSTALL':
+      subtypes = ['Sentry','Code Gate','Barrier']
+      choice = SingleChoice('Choose which subtype of ICE to be able to break',subtypes)
+      if choice == None: return 'ABORT'
+      TokensX('Put1Chameleon:{} Breaker'.format(subtypes[choice]), "", card)
+   elif fetchProperty(card, 'name') == "Allele Repression" and action == 'USE':
+      allArc = []
+      HQmoves = []
+      for c in trash: allArc.append(c)
+      for c in arcH: allArc.append(c)
+      for iter in range(card.markers[mdict['Advancement']]):
+         if not len(me.hand): 
+            whisper(":::INFO::: {} only found {} in hand to swap. Breaking off...".format(card,iter + 1))
+            iter -= 1
+            break
+         notify("-- {} is swaping {} of {}".format(me,iter + 1,card.markers[mdict['Advancement']]))
+         targetedCards = findTarget('Targeted-fromHand-isMutedTarget')
+         if len(targetedCards): cardHQ = targetedCards[0]
+         else: cardHQ = askCard([c for c in me.hand],"Choose which card to put into archives from HQ ({}/{})".format(iter + 1,card.markers[mdict['Advancement']]),'HQ Allele Repression')
+         cardARC = askCard([c for c in allArc],"Choose which card to put into HQ from Archives ({}/{})".format(iter + 1,card.markers[mdict['Advancement']]),'Archives Allele Repression')
+         if not cardHQ or not cardARC: 
+            iter -= 1
+            break
+         HQmoves.append(cardARC)
+         cardHQ.moveTo(arcH)
+         allArc.remove(cardARC)
+      for c in HQmoves: c.moveTo(me.hand)        
+      notify(":> {} trashed {} to swap {} cards between HQ and Archives".format(me,card,iter + 1))
+      intTrashCard(card,card.Stat,"free",silent = True)
+   elif fetchProperty(card, 'name') == 'Gang Sign' and action == 'USE': 
+      remoteCall(fetchRunnerPL(),'HQaccess',[])
+   elif fetchProperty(card, 'name') == 'Rolodex' and action == 'INSTALL':
+      me.piles['R&D/Stack'].lookAt(5)
+   elif fetchProperty(card, 'name') == 'Film Critic' and action == 'USE':
+      hostCards = eval(getGlobalVariable('Host Cards'))
+      attachments = fetchAttachments(card)
+      if len(attachments): 
+         clickCost = useClick(count = 2)
+         if clickCost == 'ABORT': return 'ABORT'
+         ModifyStatus('ScoreTarget-onOpponent', '', card, targetCards = attachments)
+         notify("{} get {} to review {}".format(clickCost,card,attachments[0]))
+      else: whisper(":::ERROR::: You do not have any agendas hosted on the Film Critic")
+   elif fetchProperty(card, 'name') == "An Offer You Can't Refuse" and action == 'PLAY':
+      servers = ['HQ','R&D','Archives']
+      choice = SingleChoice('Choose which server to offer to the runner',['HQ','R&D','Archives'])
+      remoteCall(fetchRunnerPL(),'OfferRefuseBegin',[card,servers[choice]])
+   elif fetchProperty(card, 'name') == 'Bookmark' and action == 'USE':
+      choice = SingleChoice('What do you want to do with the bookmark?',['[Click] Host up to 3 cards from the grip','[Click] Take all cards on Bookmark to your grip','[Trash] Take all cards on Bookmark to your grip'])
+      if choice == 0:
+         targetList = [c for c in me.hand  # First we see if they've targeted cards from their hand
+                        if c.targetedBy 
+                        and c.targetedBy == me]
+         if len(targetList) > 0:
+            done = 0
+            actionCost = useClick(count = 1)
+            if actionCost == 'ABORT': return 'ABORT'
+            for selectedCard in targetList:
+               selectedCard.moveToTable(0,0,True)
+               selectedCard.peek()
+               hostMe(selectedCard,card)
+               TokensX('Put1Bookmarked-isSilent', "", selectedCard) 
+               selectedCard.highlight = InactiveColor
+               done += 1
+               if done > 2: break
+            notify("{} to bookmark {} cards".format(actionCost,done))
+            return 'CLICK USED'
+         else: 
+            whisper(":::ERROR::: You need to target at least one card in your hand before using this action")  
+            return 'ABORT'
+      else:
+         if choice == 1:
+            actionCost = useClick(count = 1)
+            if actionCost == 'ABORT': return 'ABORT'
+         attachments = fetchAttachments(card)
+         for attach in attachments:
+            clearAttachLinks(attach)
+            changeCardGroup(attach, me.hand)
+         if choice == 1:
+            notify("{} to return their {} {}ed cards".format(actionCost,len(attachments),card))
+            return 'CLICK USED'
+         else:
+            notify("{} {} {} to return their {} bookmarked cards".format(me,uniTrash(),card,len(attachments)))
+            intTrashCard(card, card.Stat, cost = "free")
+   elif fetchProperty(card, 'name') == 'DaVinci' and action == 'USE':
+         targetLists = [c for c in me.hand  # First we see if they've targeted cards from their hand
+                        if c.targetedBy 
+                        and c.targetedBy == me]
+         if not len(targetLists):
+            targetLists = [c for c in me.hand if num(c.Cost) <= card.markers[mdict['Power']]] # If not, we just try to find cards with appropriate cost
+         if not len(targetLists): 
+            whisper(":::ERROR::: You need to target at least one card in your hand before using this action")  
+            return 'ABORT'
+         elif len(targetLists) == 1: chosenCard = targetLists[0]
+         else:         
+            choice = SingleChoice("Choose which card to bring in with DaVinci", makeChoiceListfromCardList(targetLists))
+            if choice == None: return 'ABORT'
+            else: chosenCard = targetLists[choice]
+         intPlay(chosenCard,'free', True)
+         notify("{} {} {} to bring in {} from their hand for free".format(me,uniTrash(),card,chosenCard))
+         intTrashCard(card, card.Stat, "free", silent = True)
+   elif fetchProperty(card, 'name') == 'Worlds Plaza' and action == 'USE':
+      if len(fetchAttachments(card)) >= 3: 
+         whisper(":::ERROR::: You cannot host more than 3 assetsa at {}".format(card.Name))
+         return 'ABORT'
+      targetList = findTarget('DemiAutoTargeted-atAsset-fromHand-choose1')
+      if len(targetList) > 0:
+         actionCost = useClick(count = 1)
+         if actionCost == 'ABORT': return 'ABORT'
+         selectedCard = targetList[0]
+         hostMe(selectedCard,card)
+         ModifyStatus('RezTarget-Targeted-payCost-reduc2','',card,targetCards = [selectedCard])
+         notify("{} to host {} in {}".format(actionCost,selectedCard,card))
+         return 'CLICK USED'
+      else: return 'ABORT'
+   elif fetchProperty(card, 'name') == 'SYNC' and action == 'USE':
+      actionCost = useClick(count = 1)
+      if actionCost == 'ABORT': return 'ABORT'  
+      if card.alternate == '': card.switchTo('Flipped')
+      else: card.switchTo()
+      notify("{} to flip {}".format(actionCost,card))
+   elif fetchProperty(card, 'name') == 'Media Blitz' and action == 'PLAY':
+      scoredAgendas = findTarget('DemiAutoTargeted-atAgenda-targetOpponents-isScored-choose1')
+      if not len(scoredAgendas): 
+         notify(":::ERROR::: The runner needs to have a scored agenda to use with {}".format(card))
+         return 'ABORT'
+      else: chosenAgenda = scoredAgendas[0]
+      dummyCard = table.create(chosenAgenda.model, 0,0, persist = True) # This will create a fake card of the agenda we selected
+      dummyCard.highlight = DummyColor
+      dummyCard.markers[mdict['Scored']] += 1
+      hostMe(dummyCard,card)
+      orgAttachments(card)
+      notify("{} selects to copy the text of {}".format(me,chosenAgenda))
+   elif fetchProperty(card, 'name') == 'The All-Seeing I' and action == 'PLAY':
+      remoteCall(fetchRunnerPL(),'AllSeeingI',[card])
+   elif fetchProperty(card, 'name') == 'Apex' and action == 'USE':
+      if oncePerTurn(card) == 'ABORT': return 'ABORT'
+      installTarget = findTarget('DemiAutoTargeted-fromHand-choose1')
+      if len(installTarget): 
+         placeCard(installTarget[0], action = 'INSTALL', type = 'Apex')
+         notify("{}'s hunger grows...".format(card))
+   elif fetchProperty(card, 'name') == 'Independent Thinking' and action == 'PLAY':
+      targetCards = findTarget('Targeted-atProgram_or_Hardware_or_Resource-targetMine')
+      if len(targetCards): 
+         del targetCards[5:] # Max 5 cards
+         multiplier = 1
+         for c in targetCards:
+            if re.search(r'Directive',getKeywords(c)): multiplier = 2
+         DrawX('Draw{}Cards'.format(len(targetCards) * multiplier), '', card)
+         notify("{} {} {} to draw {} cards".format(me,uniTrash(),[c.Name for c in targetCards],len(targetCards) * multiplier))
+         for c in targetCards: intTrashCard(c,c.Stat,'free',silent = True)
+   elif fetchProperty(card, 'name') == 'Safety First' and action == 'End':
+      if len(me.hand) < currentHandSize(): DrawX('Draw1Cards', '{} uses {}'.format(me,card), card, notification = 'Quick')
+   elif fetchProperty(card, 'name') == 'Security Nexus' and action == 'USE':
+      if oncePerTurn(card) == 'ABORT': return 'ABORT'
+      remoteCall(fetchCorpPL(),'TraceX',['Trace5-traceEffects<Gain1Tags++RunEnd,SimplyAnnounce{bypass the current ICE}>', '{} uses {}'.format(me,card), card, None, 'Quick', 0])
+   elif fetchProperty(card, 'name') == "Globalsec Security Clearance" and action == 'USE':      
+      if oncePerTurn(card, silent = True) == 'ABORT': return 'ABORT'
+      actionCost = useClick(count = 1)
+      if actionCost == 'ABORT': return 'ABORT'  
+      corpPl = fetchCorpPL()
+      notify(":::WARN::: {} uses {} to look at the top card of the Corp R&D.".format(me,card))
+      whisper(":::INFO::: The top card of the corp R&D is {} ({})".format(corpPl.piles['R&D/Stack'].top().Name,corpPl.piles['R&D/Stack'].top().Type))
+   elif fetchProperty(card, 'name') == "Windfall" and action == 'PLAY':      
+      deck.shuffle()
+      trashC = deck.top()
+      intTrashCard(trashC, fetchProperty(trashC,'Stat'), "free", silent = True)
+      if trashC.Type != 'Event': 
+         me.Credits += num(trashC.Cost)
+         notify(":> {}'s {} has provided them with {} credits".format(me,card,trashC.Cost))
+      else: notify(":> {} tried to get a windfall but found only gas".format(me))
+   elif fetchProperty(card, 'name') == 'Team Sponsorship' and action == 'USE':
+      choice = SingleChoice("You have a Team Sponsorship!\n\nDo you want to install from Archives or HQ",['HQ','Archives'])
+      if choice == None: return 'ABORT'
+      elif choice == 0: ModifyStatus('InstallTarget','Team Sponsortship:',card,findTarget('DemiAutoTargeted-atnonOperation-fromHand-choose1'))
+      else: RetrieveX('Retrieve1Cards-grabnonOperation-fromArchives-toTable', 'Team Sponsortship:', card, notification = 'Quick')
+   elif fetchProperty(card, 'name') == 'Drug Dealer' and action == 'Start': # Have to use a custom script because due to the remote calls, 2/3 of this card will try to draw the same card.
+      remoteCall(fetchRunnerPL(),'DrugDealer',[card]) # So we need to remote script the whole card draw to make sure the runner does the draws serially, after each has finished executing.
+   elif fetchProperty(card, 'name') == 'Advanced Concept Hopper' and action == 'Run' and card.controller.getGlobalVariable('ds') == 'corp': 
+      remoteCall(fetchCorpPL(),'ACH',[card])
+   elif fetchProperty(card, 'name') == "Kala Ghoda Real TV" and action == 'Start':      
+      runnerPl = fetchRunnerPL()
+      notify(":::WARN::: {} uses {} to look at the top card of the Runer's Stack.".format(me,card))
+      whisper(":::INFO::: The top card of the corp R&D is {} ({})".format(runnerPl.piles['R&D/Stack'].top().Name,runnerPl.piles['R&D/Stack'].top().Type))
    elif action == 'USE': useCard(card)
       
             
@@ -1297,11 +1666,27 @@ def markerEffects(Time = 'Start'):
             TokensX('Remove999Social Engineering-isSilent', "Social Engineering:", card)
          if re.search(r'Gyri Labyrinth',marker[0]) and Time == 'Start' and (card.controller != me or len(getPlayers()) == 1): 
             opponentPL = findOpponent()
-            opponentPL.counters['Hand Size'].value += card.markers[marker] * 2
+            #opponentPL.counters['Hand Size'].value += card.markers[marker] * 2
             notify(":> Gyri Labyrinth's effect expires and {} recovers {} hand size".format(card,card.markers[marker] * 2))
+            card.markers[marker] = 0
+         if re.search(r'Valley Grid',marker[0]) and Time == 'Start' and (card.controller != me or len(getPlayers()) == 1): 
+            opponentPL = findOpponent()
+            #opponentPL.counters['Hand Size'].value += card.markers[marker]
+            notify(":> Valley Grid's effect expires and {} recovers {} hand size".format(card,card.markers[marker] * 2))
             card.markers[marker] = 0
          if re.search(r'IT Department',marker[0]) and Time == 'End':
             TokensX('Remove999IT Department-isSilent', "IT Department:", card)
+         if re.search(r'Bandwidth Logged',marker[0]) and Time == 'SuccessfulRun' or Time == 'JackOut':
+            if Time == 'SuccessfulRun': GainX('Lose{}Tags'.format(card.markers[marker]), "Bandwidth:", card)
+            TokensX('Remove999Bandwidth Logged-isSilent', "Bandwidth:", card)
+         if re.search(r'Gene Conditioned',marker[0]) and Time == 'End':
+            TokensX('Remove999Gene Conditioned-isSilent', "Gene Conditioned:", card)
+         if re.search(r'London Library',marker[0]) and Time == 'End': # We put Test Run's effect here, as the card will be discarded after being played.
+            notify("--> London Library reimages their systems and {} is trashed".format(card))
+            ModifyStatus('TrashMyself', 'London Library:', card)
+         if re.search(r'Feelgood',marker[0]) and Time == 'End':
+            TokensX('Remove999Feelgood-isSilent', "Dr. Feelgood:", card)
+
 
 def ASVarEffects(Time = 'Start'):
    mute()
@@ -1455,6 +1840,16 @@ def markerScripts(card, action = 'USE'):
          executePlayScripts(card,'INSTALL')
          autoscriptOtherPlayers('CardInstall',card)
          notify("{} has paid {}{} in order to install {} from {}.".format(me,uniCredit(cardCost),reduceTXT,card,hostCard))
+      if key[0] == 'Peddled' and action == 'USE':
+         foundSpecial = True
+         if card.Type == 'Event': notify(":::ERROR::: You cannot get events from the Street Peddler")
+         else:
+            streetPeddler = fetchHost(card)
+            unlinkHosts(card)
+            card.isFaceUp = True
+            intPlay(card, cost = 'not free', scripted = True, preReduction = 1, retainPos = True)
+            card.markers[key] = 0
+            intTrashCard(streetPeddler, streetPeddler.Stat, cost = "free")
    return foundSpecial
    
 def setAwareness(card):
@@ -1469,15 +1864,31 @@ def setAwareness(card):
 # These are card effects which have taken over the default action of the game temporarily.
 #------------------------------------------------------------------------------
 
-def hijcack(card):
+def hijack(card):
    mute()
    global hijackDefaultAction
-   currentHijack = hijackDefaultAction.pop()
+   currentHijack = hijackDefaultAction[0]
    if currentHijack.Name == "Space Camp":
       TokensX('Put1Advancement-isSilent', "", card)
       notify("{} uses {} to add an advancement on {}".format(me,currentHijack.Name,card))
-
-      
+   if currentHijack.Name == "Award Bait":
+      count = askInteger("How many tokens do you want to add to this card (Max 2)",2)
+      if count == None: count = 0
+      elif count > 2: count = 2
+      TokensX('Put{}Advancement-isSilent'.format(count), "", card)
+      notify("{} uses {} to add {} advancement tokens on {}".format(me,currentHijack.Name,count,card))
+   if currentHijack.Name == "Muertos Gang Member":
+      if currentHijack.group == table:
+         if not (card.isFaceUp and card.controller == me and (card.Type == 'ICE' or card.Type == 'Asset'  or card.Type == 'Upgrade') and card.highlight != InactiveColor and card.highlight != RevealedColor and card.highlight != DummyColor):
+            notify(":::ERROR::: You cannot derez that card")
+            return
+         else: derez(card)
+      else: 
+         if not (card.isFaceUp == False and card.controller == me and (card.Type == 'ICE' or card.Type == 'Asset'  or card.Type == 'Upgrade') and card.highlight != InactiveColor and card.highlight != RevealedColor and card.highlight != DummyColor):
+            notify(":::ERROR::: You cannot rez that card")
+            return
+         else: rezForFree(card)
+   hijackDefaultAction.pop()
 #------------------------------------------------------------------------------
 # Custom Remote Functions
 #------------------------------------------------------------------------------
@@ -1633,18 +2044,130 @@ def ArgusSecurity(card):
 
 def chkGagarinTax(card):
    mute()
-   findGagarin = [card for card in table if card.Name == 'Gagarin Deep Space']
-   if len(findGagarin):
-      gararin = findGagarin[0]
-      reduction = reduceCost(card, 'ACCESS', 1)
-      if reduction > 0: extraText = " (reduced by {})".format(uniCredit(reduction))
-      elif reduction < 0: extraText = " (increased by {})".format(uniCredit(abs(reduction)))
-      else: extraText = ''
-      rc = payCost(1 - reduction, "not free")
-      if rc != "ABORT":  # If the player couldn't pay to trash the card, we leave it where it is.
-         notify(":> {} forced {} paid {}{} to access the remote server".format(gararin, me,uniCredit(1 - reduction),extraText))
-      else: 
-         notify(":> {} did not have enough money to pay the {} tax".format(me,gararin))
-         return 'ABORT'
+   runTarget = getGlobalVariable('status')
+   if runTarget != 'runningHQ' and runTarget != 'runningR&D' and runTarget != 'runningArchives': # Gagarin only works on remote servers
+      findGagarin = [card for card in table if card.Name == 'Gagarin Deep Space']
+      if len(findGagarin):
+         gararin = findGagarin[0]
+         reduction = reduceCost(card, 'ACCESS', 1)
+         if reduction > 0: extraText = " (reduced by {})".format(uniCredit(reduction))
+         elif reduction < 0: extraText = " (increased by {})".format(uniCredit(abs(reduction)))
+         else: extraText = ''
+         rc = payCost(1 - reduction, "not free")
+         if rc != "ABORT":  # If the player couldn't pay to trash the card, we leave it where it is.
+            notify(":> {} forced {} paid {}{} to access the remote server".format(gararin, me,uniCredit(1 - reduction),extraText))
+         else: 
+            notify(":> {} did not have enough money to pay the {} tax".format(me,gararin))
+            return 'ABORT'
    return 'OK'
-     
+
+def HacktivistMeeting(card):
+   mute()
+   discardC = me.hand.random()
+   if not discardC: notify(":::WARNING::: {} was supposed to trash a random card from HQ to rez their non-ICE card, but they had no cards left in hand".format(me))
+   else:
+      handDiscard(discardC, True)
+      notify(":> {} trashed a card from HQ at random as an extra cost".format(me))
+      
+def MuertosGangInstall(card):
+   rezzedOptions = [c for c in table if c.controller == me and c.isFaceUp and (c.Type == 'ICE' or c.Type == 'Asset' or c.Type == 'Upgrade') and c.highlight != InactiveColor and c.highlight != RevealedColor and c.highlight != DummyColor]
+   if not len(rezzedOptions):
+      notify(":::INFO::: {} did not have anything to derez for {}".format(me,card))
+   elif len(rezzedOptions) == 1: derez(rezzedOptions[0])
+   else:      
+      if not confirm("A {} has just been installed and you need to derez one of your cards.\
+                   \nYou need to double click on one of your rezzed card to derez it\
+                   \n\nProceed?".format(card.Name)): return
+      hijackDefaultAction.append(card)                
+      showHijackQueue()
+   
+def MuertosGangUninstall(card):
+   if not confirm("A {} has just been uninstalled and you may rez one of your cards.\
+                \nYou need to double click on one of your unrezzed card to rez it\
+                \n\nProceed? ('No' will forfeit this opportunity)".format(card.Name)): 
+      notify(":> {} opts not to rez any of their cards for free".format(me))          
+      return
+   hijackDefaultAction.append(card)                
+   showHijackQueue()
+   
+def chkFilmCritic(card):
+   mute()
+   if card.Type == 'Agenda':
+      hostCards = eval(getGlobalVariable('Host Cards'))
+      openCritic = None
+      for c in table:
+         notThisCritic = False # Checks if the current critic has an agenda hosted. If True, we skip this card
+         if c.Name == 'Film Critic' and c.isFaceUp:
+            for attachment in hostCards:
+               if hostCards[attachment] == c._id: 
+                  notThisCritic = True
+                  break
+            if not notThisCritic: # If we found a valid critic, we abort
+               openCritic = c
+               break
+      if openCritic:
+         if confirm("You have accessed {} and you have an available film Critic. Would you like them to host this Agenda".format(card.Name)):
+            clearAttachLinks(card)
+            hostMe(card,openCritic)
+            card.highlight = InactiveColor
+            flipCard(card)
+            grabCardControl(card)
+            return 'ABORT'   
+   return 'OK'
+
+def OfferRefuseBegin(card,server):
+   if confirm("{} is making you an offer to run on their {}. Do you accept?".format(card.owner.name,server)):
+      RunX('Run{}'.format(server), '', card)
+      notify("{} has no choice but to accept {}'s offer and begins a run on {}".format(me,card.owner.name,server))
+   else: 
+      ModifyStatus('ScoreMyself', '', card)
+      GainX('Gain1Agenda Points','',card)
+      TokensX('Put1Scored-isSilent','',card)
+      notify("{} is cowered and {} scores {} for 1 Agenda Point".format(me,card.owner.name,card))
+      
+def fifteenMinutesShuffle(player): # We need to remote call the deck shuffle or 15 minutes will always be placed on top of the R&D instead since the shuffle is too fast
+   mute()
+   remoteCall(player,'shuffle',[player.piles['R&D/Stack']])      
+   
+def NewsTeam(card):
+   choice = SingleChoice("You have accessed a News Team! Do you want to take 2 tags or take this card for -1 Agenda Points?",['Take 2 Tags','-1 Agenda points'])
+   if not choice: 
+      GainX('Gain2Tags-isSilent-onOpponent', '', card)
+      notify("{} opts to take two tags!".format(me))
+   else: 
+      GainX('Lose1Agenda Points-onOpponent-isSilent', '', card)
+      ModifyStatus('ScoreMyself-onOpponent-isSilent', '', card)
+      update()
+      TokensX('Put1ScorePenalty-isSilent', '', card)
+      notify("{} opts to score News Team for -1 Agenda Point".format(me))
+      
+def AllSeeingI(card):
+   if me.counters['Bad Publicity'].value > 0 and confirm("Do you want to remove 1 bad publicity to prevent the All Seeing I?"):
+      me.counters['Bad Publicity'].value -= 1
+      notify("{} chooses to remove 1 bad publicity".format(me))
+   else:
+      for c in table:
+         if c.Type == 'Resource' and c.isFaceUp: intTrashCard(c, c.Stat, "free", True)
+      notify("The All Seeing I has trashed all of {}'s resources".format(me))         
+         
+def DrugDealer(card):
+   drawMany(me.piles['R&D/Stack'], 1, silent = True)
+   notify("--> {} triggers to hook {} up with 1 new card ".format(card,card.owner.name))
+   
+def Archangel(card):
+   mute()
+   targets = findTarget('DemiAutoTargeted-atProgram_or_Resource_or_Hardware-choose1')
+   if len(targets): ModifyStatus('UninstallTarget', '', card, targets)
+
+def ACH(card):
+   if oncePerTurn(card, act = 'automatic') == 'ABORT': return 'ABORT'
+   choice = SingleChoice("What do you want your {} to give you".format(card.Name), ["Do not use","Draw 1 Card","Gain 1 Credit"])
+   if choice == 1: 
+      DrawX('Draw1Cards', '', card)
+      notify("{} uses {} to draw 1 card".format(me,card))
+   elif choice == 2: 
+      me.Credits += 1
+      notify("{} uses {} to gain {}".format(me,card,uniCredit(1)))
+   else:
+      notify("{} opts not to use their {}".format(me,card))
+   

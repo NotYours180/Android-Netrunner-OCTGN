@@ -50,7 +50,7 @@ lastKnownNrClicks = 0 # A Variable keeping track of what the engine thinks our a
 # Clicks indication
 #---------------------------------------------------------------------------
 
-def useClick(group = table, x=0, y=0, count = 1, manual = False):
+def useClick(group = table, x=0, y=0, count = 1, manual = False, type = ''):
    debugNotify(">>> useClick(){}".format(extraASDebug())) #Debug
    global currClicks, lastKnownNrClicks
    mute()
@@ -60,6 +60,12 @@ def useClick(group = table, x=0, y=0, count = 1, manual = False):
       if getGlobalVariable('SuccessfulRun') == 'True': jackOut() # If the runner has done a successful run but forgot to end it, then simply jack them out automatically.
       elif not confirm("You have not yet finished your previous run. Normally you're not allowed to use clicks during runs, are you sure you want to continue?\
                     \n\n(Pressing 'No' will abort this action and you can then Jack-out or finish the run succesfully with [ESC] or [F3] respectively"): return 'ABORT'
+   if ds == 'runner' and not re.search(r'Run',type):
+      for c in table:
+         if c.Name == 'Always Be Running':
+            if c.orientation != Rot90 and c.highlight != InactiveColor  and c.highlight != RevealedColor and not findMarker(c, 'Feelgood'):
+               if not confirm("You have an {} on the table, so you're compelled to run with your first click. Bypass?".format(c.Name)): return 'ABORT'                     
+               else: c.orientation = Rot90
    clicksReduce = findCounterPrevention(me.Clicks, 'Clicks', me)
    if clicksReduce: notify(":::WARNING::: {} had to forfeit their next {} clicks".format(me, clicksReduce))
    me.Clicks -= clicksReduce
@@ -140,7 +146,7 @@ def goToEndTurn(group, x = 0, y = 0):
    currClicks = 0
    myCards = [card for card in table if card.controller == me and card.owner == me]
    for card in myCards: # We refresh once-per-turn cards to be used on the opponent's turn as well (e.g. Net Shield)
-      if card._id in Stored_Type and fetchProperty(card, 'Type') != 'ICE': card.orientation &= ~Rot90
+      if card.Type != 'ICE': card.orientation &= ~Rot90
    clearRestrictionMarkers()
    atTimedEffects('End')
    clearAll() # Just in case the player has forgotten to remove their temp markers.
@@ -152,6 +158,7 @@ def goToSot (group, x=0,y=0):
    debugNotify(">>> goToSot(){}".format(extraASDebug())) #Debug
    global newturn, endofturn, lastKnownNrClicks, currClicks, turn
    mute()
+   chkTripleID()
    if endofturn or currClicks or newturn or me.Clicks != 0:
       if debugVerbosity <= 0 and not confirm("You have not yet properly ended you previous turn. You need to use F12 after you've finished all your clicks.\n\nAre you sure you want to continue?"): return
       else:
@@ -183,7 +190,7 @@ def goToSot (group, x=0,y=0):
    try: # Trying to figure out where #275 is coming from
       myCards = [card for card in table if card.controller == me and card.owner == me]
       for card in myCards:
-         if card._id in Stored_Type and fetchProperty(card, 'Type') != 'ICE': card.orientation &= ~Rot90 # Refresh all cards which can be used once a turn.
+         if card.Type != 'ICE': card.orientation &= ~Rot90 # Refresh all cards which can be used once a turn.
          if card.Name == '?' and card.owner == me and not card.isFaceUp:
             debugNotify("Peeking() at goToSot()")
             card.peek() # We also peek at all our facedown cards which the runner accessed last turn (because they left them unpeeked)
@@ -200,6 +207,7 @@ def goToSot (group, x=0,y=0):
    if ds == 'runner':
       setGlobalVariable('Remote Run','False')
       setGlobalVariable('Central Run','False')
+   setGlobalVariable('Genetics Pavilion Memory',0)
    atTimedEffects('Start') # Check all our cards to see if there's any Start of Turn effects active.
    announceSoT()
    opponent = ofwhom('onOpponent')
@@ -289,6 +297,13 @@ def intJackin(group = table, x = 0, y = 0, manual = False):
       BL = num(Identity.Cost)
       me.counters['Base Link'].value = BL
       notify("{} is representing the Runner {}. They start with {} {}".format(me,Identity,BL,uniLink()))
+      if Identity.Name == 'Adam': #Adam needs his directives
+         dir1 = table.create("bc0f047c-01b1-427f-a439-d451eda09041", 0 , 0, persist = True)
+         dir2 = table.create("bc0f047c-01b1-427f-a439-d451eda09043", 0 , 0, persist = True)
+         dir3 = table.create("bc0f047c-01b1-427f-a439-d451eda09044", 0 , 0, persist = True)
+         placeCard(dir1,'INSTALL')
+         placeCard(dir2,'INSTALL')
+         placeCard(dir3,'INSTALL')
    debugNotify("Creating Starting Cards", 3)
    createStartingCards()
    debugNotify("Shuffling Deck", 3)
@@ -333,14 +348,16 @@ def intRun(aCost = 1, Name = 'R&D', silent = False):
    for c in table:
       if c.name == 'Enhanced Login Protocol' and c.orientation != Rot90 and not silent: # For cards which increase the action cost, we need to check manually before the run. We don't do it when silent since that signifies a scripted run (i.e. card effect)
          aCost += 1
-         c.orientation = Rot90
-   ClickCost = useClick(count = aCost)
+         c.orientation = Rot90         
+   ClickCost = useClick(count = aCost, type = 'Run')
    if ClickCost == 'ABORT': return 'ABORT'
+   for c in table: 
+      if c.name == 'Always Be Running' and c.orientation != Rot90 and not findMarker(c, 'Feelgood'): c.orientation = Rot90 # If the run can go ahead fine, we make sure we disable ABR.
    playRunStartSound()
    if Name == 'Archives': announceTXT = 'the Archives'
    elif Name == 'Remote': announceTXT = 'a remote server'
    else: announceTXT = Name
-   if not silent: notify ("{} to start a run on {}.".format(ClickCost,announceTXT))
+   if not silent: notify ("{} to start a run on {}. They have {}.".format(ClickCost,announceTXT,uniCredit(me.Credits)))
    #barNotifyAll('#000000',"{} starts a run on {}.".format(fetchRunnerPL(),announceTXT))
    debugNotify("Setting bad publicity", 2)
    if BadPub > 0:
@@ -580,6 +597,7 @@ def advanceCardP(card, x = 0, y = 0):
       me.Clicks += 1 # If the player didn't notice they didn't have enough credits, we give them back their click
       return # If the player didn't have enough money to pay and aborted the function, then do nothing.
    card.markers[mdict['Advancement']] += 1
+   if card.isFaceUp: executePlayScripts(card,'ADVANCE')
    remoteCall(findOpponent(),'playSound',['Advance-Card']) # Attempt to fix lag
    #playSound('Advance-Card')
    if card.isFaceUp: notify("{} and paid {}{} to advance {}.".format(ClickCost,uniCredit(1 - reduction),extraText,card))
@@ -649,39 +667,76 @@ def inputTraceValue (card, x=0,y=0, limit = 0, silent = False):
    else: extraText = ''
    if payCost(TraceValue - reduction)  == 'ABORT': return
    #card.markers[mdict['Credits']] = TraceValue
-   if ds == 'corp':
-      if not silent: notify("{} starts a trace with a base strength of 0 reinforced by {}{}.".format(me,TraceValue,extraText))
-      setGlobalVariable('CorpTraceValue',str(TraceValue))
-      OpponentTrace = getSpecial('Tracing',ofwhom('ofOpponent'))
-      OpponentTrace.highlight = EmergencyColor
-      autoscriptOtherPlayers('InitiatedTrace', card)
-   else:
-      if not silent: notify("{} reinforces their {} by {} for a total of {}{}.".format(me,uniLink(),TraceValue, TraceValue + me.counters['Base Link'].value,extraText))
-      CorpTraceValue = num(getGlobalVariable('CorpTraceValue'))
-      currentTraceEffectTuple = eval(getGlobalVariable('CurrentTraceEffect'))
-      debugNotify("currentTraceEffectTuple = {}".format(currentTraceEffectTuple), 2)
-      if CorpTraceValue > TraceValue + me.counters['Base Link'].value:
-         notify("-- {} has been traced".format(identName))
-         playTraceLostSound()
-         autoscriptOtherPlayers('UnavoidedTrace', card)
-         try:
-            if currentTraceEffectTuple[1] != 'None':
-               debugNotify("Found currentTraceEffectTuple")
-               executePostEffects(Card(currentTraceEffectTuple[0]),currentTraceEffectTuple[1], count = CorpTraceValue - TraceValue - me.counters['Base Link'].value) # We sent this function the card which triggered the trace, and the effect which was triggered.
-         except: 
-            debugNotify("currentTraceEffectTuple == None")
-            pass # If it's an exception it means our tuple does not exist, so there's no current trace effects. Manual use of the trace card?
+   if len([c for c in table if c.Name == 'Surveillance Sweep']) and re.search(r'running([A-Za-z&]+)',getGlobalVariable('status')): # We need to swap the order if Surveillance sweep is on the game
+      if ds == 'runner':
+         if not silent: notify("{} reinforces their {} by {} for a total of {}{}.".format(me,uniLink(),TraceValue, TraceValue + me.counters['Base Link'].value,extraText))
+         setGlobalVariable('RunnerTraceValue',str(TraceValue + me.counters['Base Link'].value))
+         OpponentTrace = getSpecial('Tracing',findOpponent())
+         OpponentTrace.highlight = EmergencyColor
+         autoscriptOtherPlayers('InitiatedTrace', card)
       else:
-         notify("-- {} has eluded the trace".format(identName))
-         playTraceAvoidedSound()
-         autoscriptOtherPlayers('EludedTrace', card)
-         try:
-            if currentTraceEffectTuple[2] != 'None':
-               executePostEffects(Card(currentTraceEffectTuple[0]),currentTraceEffectTuple[2]) # We sent this function the card which triggered the trace, and the effect which was triggered.
-         except: pass # If it's an exception it means our tuple does not exist, so there's no current trace effects. Manual use of the trace card?
-      setGlobalVariable('CurrentTraceEffect','None') # Once we're done with the current effects of the trace, we clear the CurrentTraceEffect global variable
-      setGlobalVariable('CorpTraceValue','None') # And the corp's trace value
-      card.highlight = None
+         CorpTraceStrength = num(getGlobalVariable('CorpTraceValue'))
+         RunnerTraceValue = num(getGlobalVariable('RunnerTraceValue'))
+         if not silent: notify("{} reinforces their trace by {} for a total of {}{}.".format(me,TraceValue, TraceValue + CorpTraceStrength,extraText))
+         currentTraceEffectTuple = eval(getGlobalVariable('CurrentTraceEffect'))
+         debugNotify("currentTraceEffectTuple = {}".format(currentTraceEffectTuple), 2)
+         if CorpTraceStrength + TraceValue > RunnerTraceValue:
+            notify("-- {} has been traced".format(fetchRunnerPL()))
+            playTraceLostSound()
+            autoscriptOtherPlayers('UnavoidedTrace', card)
+            try:
+               if currentTraceEffectTuple[1] != 'None':
+                  debugNotify("Found currentTraceEffectTuple")
+                  executePostEffects(Card(currentTraceEffectTuple[0]),currentTraceEffectTuple[1], count = CorpTraceStrength + TraceValue - RunnerTraceValue) # We sent this function the card which triggered the trace, and the effect which was triggered.
+            except: 
+               debugNotify("currentTraceEffectTuple == None")
+               pass # If it's an exception it means our tuple does not exist, so there's no current trace effects. Manual use of the trace card?
+         else:
+            notify("-- {} has eluded the trace".format(identName))
+            playTraceAvoidedSound()
+            autoscriptOtherPlayers('EludedTrace', card)
+            try:
+               if currentTraceEffectTuple[2] != 'None':
+                  executePostEffects(Card(currentTraceEffectTuple[0]),currentTraceEffectTuple[2]) # We sent this function the card which triggered the trace, and the effect which was triggered.
+            except: pass # If it's an exception it means our tuple does not exist, so there's no current trace effects. Manual use of the trace card?
+         setGlobalVariable('CurrentTraceEffect','None') # Once we're done with the current effects of the trace, we clear the CurrentTraceEffect global variable
+         setGlobalVariable('CorpTraceValue','None') # And the corp's trace value
+         setGlobalVariable('RunnerTraceValue','None') # And the runner's trace value
+         card.highlight = None
+   else:
+      if ds == 'corp':
+         if not silent: notify("{} starts a trace with a base strength of 0 reinforced by {}{}.".format(me,TraceValue,extraText))
+         setGlobalVariable('CorpTraceValue',str(TraceValue))
+         OpponentTrace = getSpecial('Tracing',findOpponent())
+         OpponentTrace.highlight = EmergencyColor
+         autoscriptOtherPlayers('InitiatedTrace', card)
+      else:
+         if not silent: notify("{} reinforces their {} by {} for a total of {}{}.".format(me,uniLink(),TraceValue, TraceValue + me.counters['Base Link'].value,extraText))
+         CorpTraceValue = num(getGlobalVariable('CorpTraceValue'))
+         currentTraceEffectTuple = eval(getGlobalVariable('CurrentTraceEffect'))
+         debugNotify("currentTraceEffectTuple = {}".format(currentTraceEffectTuple), 2)
+         if CorpTraceValue > TraceValue + me.counters['Base Link'].value:
+            notify("-- {} has been traced".format(identName))
+            playTraceLostSound()
+            autoscriptOtherPlayers('UnavoidedTrace', card)
+            try:
+               if currentTraceEffectTuple[1] != 'None':
+                  debugNotify("Found currentTraceEffectTuple")
+                  executePostEffects(Card(currentTraceEffectTuple[0]),currentTraceEffectTuple[1], count = CorpTraceValue - TraceValue - me.counters['Base Link'].value) # We sent this function the card which triggered the trace, and the effect which was triggered.
+            except: 
+               debugNotify("currentTraceEffectTuple == None")
+               pass # If it's an exception it means our tuple does not exist, so there's no current trace effects. Manual use of the trace card?
+         else:
+            notify("-- {} has eluded the trace".format(identName))
+            playTraceAvoidedSound()
+            autoscriptOtherPlayers('EludedTrace', card)
+            try:
+               if currentTraceEffectTuple[2] != 'None':
+                  executePostEffects(Card(currentTraceEffectTuple[0]),currentTraceEffectTuple[2]) # We sent this function the card which triggered the trace, and the effect which was triggered.
+            except: pass # If it's an exception it means our tuple does not exist, so there's no current trace effects. Manual use of the trace card?
+         setGlobalVariable('CurrentTraceEffect','None') # Once we're done with the current effects of the trace, we clear the CurrentTraceEffect global variable
+         setGlobalVariable('CorpTraceValue','None') # And the corp's trace value
+         card.highlight = None
    return TraceValue
 
 #def revealTraceValue (card, x=0,y=0): # Obsolete in ANR
@@ -763,13 +818,10 @@ def reduceCost(card, action = 'REZ', fullCost = 0, dryRun = False, reversePlayer
             debugNotify("No onPay trigger found in {}!".format(autoS), 2)
             continue
          reductionSearch = re.search(r'Reduce([0-9]+)Cost({}|All)'.format(type), autoS)
+         #confirm(str(reductionSearch.groups()))
          if debugVerbosity >= 2: #Debug
             if reductionSearch: notify("!!! self-reduce regex groups: {}".format(reductionSearch.groups()))
             else: notify("!!! No self-reduce regex Match!")
-         oppponent = ofwhom('-ofOpponent')
-         if re.search(r'ifNoisyOpponent', autoS) and oppponent.getGlobalVariable('wasNoisy') != '1':
-            debugNotify("No required noisy bit found!", 2)
-            continue
          count = num(reductionSearch.group(1))
          targetCards = findTarget(autoS,card = card)
          multiplier = per(autoS, card, 0, targetCards)
@@ -785,25 +837,28 @@ def reduceCost(card, action = 'REZ', fullCost = 0, dryRun = False, reversePlayer
       del costIncreasers[:]
       RC_cardList = sortPriority([c for c in table
                               if c.isFaceUp
+                              and not findMarker(c, 'Feelgood')
+                              and not (c.Type == 'Identity' and chkBlankID(c.Side))
                               and c.highlight != RevealedColor
                               and c.highlight != StealthColor # Cards reserved for stealth do not give the credits elsewhere. Stealth cards like dagger use those credits via TokensX
                               and c.highlight != InactiveColor])
       reductionRegex = re.compile(r'(Reduce|Increase)([0-9#XS]+)Cost({}|All)-affects([A-Z][A-Za-z ]+)(-not[A-Za-z_& ]+)?'.format(type)) # Doing this now, to reduce load.
       for c in RC_cardList: # Then check if there's other cards in the table that reduce its costs.
          debugNotify("Scanning {}".format(c), 2) #Debug
-         if c.Type == 'Identity' and c.Side == 'runner' and chkCerebralStatic(): continue # If Cerebral Static is still active, we abort the scripts.
+         if c.Type == 'Identity' and chkBlankID(c.Side): continue # If Cerebral Static is still active, we abort the scripts.
          Autoscripts = CardsAS.get(c.model,'').split('||')
          if len(Autoscripts) == 0: 
             debugNotify("No AS found. Continuing")
             continue
          for autoS in Autoscripts:
-            debugNotify("AS: {}".format(autoS), 2) #Debug
+            #confirm("{} AS: {}".format(c.Name,autoS)) #Debug
             if not chkRunningStatus(autoS): 
                debugNotify("Rejecting because not running")
                continue # if the reduction is only during runs, and we're not in a run, bypass this effect
             if not chkPlayer(autoS, origController.get(c._id,c.controller), False, reversePlayerChk = reversePlayer): 
                debugNotify("Rejecting because player does not match")
                continue
+            if not chkAlternate(autoS,c): continue
             reductionSearch = reductionRegex.search(autoS)
             if debugVerbosity >= 2: #Debug
                if reductionSearch: notify("!!! Regex is {}".format(reductionSearch.groups()))
@@ -867,6 +922,20 @@ def reduceCost(card, action = 'REZ', fullCost = 0, dryRun = False, reversePlayer
             if c.name == 'Industrial Genomics':
                reduction -= len(fetchCorpPL().piles['Archives(Hidden)'])
                fullCost += len(fetchCorpPL().piles['Archives(Hidden)'])
+            if c.name == 'Student Loans':
+               loans = 0
+               for heapC in card.owner.piles['Heap/Archives(Face-up)']:
+                  if heapC.Name == card.Name: 
+                     loans += 2
+                     break
+               if not loans:
+                  for tableC in table: # We also check the table, in case they played two of the same events in a row.
+                     if tableC.Name == card.Name and tableC.highlight == NewCardColor: 
+                        loans += 2
+                        break
+               reduction -= loans
+               fullCost += loans
+               if not dryRun and loans: notify(" -- {} increases the cost of {} by 2".format(c,card))
          else:
             for iter in range(num(reductionSearch.group(2))):  # if there is a match, the total reduction for this card's cost is increased.
                reduction -= 1
@@ -890,7 +959,17 @@ def reduceCost(card, action = 'REZ', fullCost = 0, dryRun = False, reversePlayer
                if oncePerTurn(c, act = 'dryRun') == 'ABORT': continue
             else:
                if oncePerTurn(c, act = 'automatic') == 'ABORT': continue # if the card's effect has already been used, check the next one
-         if reductionSearch.group(2) == '#' and c.highlight == PriorityColor: # We also check if we have any recurring credits to spend on cards which the player has prioritized. Those will spend before BP.
+         if reductionSearch.group(2) == 'S': # 'S' Stands for Special (i.e. custom effects) They go before others since the one available makes sense to be used before recurring creds etc.
+            if c.name == 'Brain-Taping Warehouse':
+               if fetchRunnerPL().Clicks > fullCost: 
+                  reduction += fullCost
+                  fullCost = 0
+                  notify(" -- {} reduces the cost of the Bioroid ICE to 0".format(c))
+               else:               
+                  reduction += fetchRunnerPL().Clicks
+                  fullCost -= fetchRunnerPL().Clicks
+                  notify(" -- {} reduces the cost of the Bioroid ICE by the {} unspent runner clicks".format(c,fetchRunnerPL().Clicks))
+         elif reductionSearch.group(2) == '#' and c.highlight == PriorityColor: # We also check if we have any recurring credits to spend on cards which the player has prioritized. Those will spend before BP.
             markersCount = c.markers[mdict['Credits']]
             markersRemoved = 0
             while markersCount > 0:
@@ -988,7 +1067,10 @@ def intdamageDiscard(count = 1, dmgType = 'Meat'):
          reportGame('Flatlined')
          break
       else:
-         card = me.hand.random()
+         if len([c for c in table if c.Name == 'Titanium Ribs']):
+            notify(":::INFO::: {} is choosing which card to trash due to their Titanium Ribs...".format(me))
+            card = askCard([c for c in me.hand],"Choose which card to Trash from the {} damage ({}/{})".format(dmgType,DMGpt,count),'Titanium Ribs')
+         else: card = me.hand.random()            
          discardedList.append(card)
          if ds == 'corp': card.moveTo(me.piles['Archives(Hidden)']) # For testing.
          else: card.moveTo(me.piles['Heap/Archives(Face-up)'])
@@ -996,6 +1078,7 @@ def intdamageDiscard(count = 1, dmgType = 'Meat'):
    for card in discardedList: 
       #confirm("trashed {} with {}. Sending {}".format(card.Name,dmgType,'{}DMGDiscard'.format(dmgType)))
       executePlayScripts(card,'{}DMGDiscard'.format(dmgType)) # If we have cards with effects when discarded (e.g. I've had worse) we trigger them after all damage has been applied.
+   autoscriptOtherPlayers('{}DMGTaken'.format(dmgType))
       
 
 def addBrainDmg(group, x = 0, y = 0):
@@ -1071,6 +1154,7 @@ def findDMGProtection(DMGdone, DMGtype, targetPL): # Find out if the player has 
    protectionFound = 0
    protectionType = 'protection{}DMG'.format(DMGtype) # This is the string key that we use in the mdict{} dictionary
    for card in table: # First we check if we have some emergency protection cards.
+      if findMarker(card, 'Feelgood'): continue
       debugNotify("Checking {} for emergency protection".format(card))
       for autoS in CardsAS.get(card.model,'').split('||'):
          debugNotify("Checking autoS = {} ".format(autoS),4)
@@ -1096,6 +1180,7 @@ def findDMGProtection(DMGdone, DMGtype, targetPL): # Find out if the player has 
                         notify(":::NOTICE::: {} is still waiting for {} to decide whether to use {} or not".format(me,targetPL,card))
    cardList = sortPriority([c for c in table
                if c.controller == targetPL
+               and not findMarker(c, 'Feelgood')
                and c.markers])
    for card in cardList: # First we check for complete damage protection (i.e. protection from all types), which is always temporary.
       if card.markers[mdict['protectionAllDMG']]:
@@ -1116,10 +1201,13 @@ def findDMGProtection(DMGdone, DMGtype, targetPL): # Find out if the player has 
          if DMGdone == 0: break
    for card in cardList:
       if card.markers[mdict[protectionType]]:
-         if card.markers[mdict[protectionType]] == 100: # If we have 100 markers of damage prevention, the card is trying to prevent all Damage.
+         if card.markers[mdict[protectionType]] == 100: # If we have 100 markers of damage prevention, the card is trying to prevent all Damage once.
             protectionFound += DMGdone
             DMGdone = 0
             card.markers[mdict[protectionType]] = 0
+         elif card.markers[mdict[protectionType]] == 101: # If we have 101 markers of damage prevention, the card is trying to prevent all Damage forever.
+            protectionFound += DMGdone
+            DMGdone = 0
          else:
             while DMGdone > 0 and card.markers[mdict[protectionType]] > 0: # For each point of damage we do.
                protectionFound += 1 # We increase the protection found by 1
@@ -1140,6 +1228,9 @@ def findDMGProtection(DMGdone, DMGtype, targetPL): # Find out if the player has 
             protectionFound += DMGdone
             DMGdone = 0
             card.markers[mdict[altprotectionType]] = 0
+         elif card.markers[mdict[altprotectionType]] == 101: # If we have 100 markers of damage prevention, the card is trying to prevent all Damage.
+            protectionFound += DMGdone
+            DMGdone = 0
          else:
             while DMGdone > 0 and card.markers[mdict[altprotectionType]] > 0:
                protectionFound += 1 #
@@ -1188,8 +1279,7 @@ def findVirusProtection(card, targetPL, VirusInfected): # Find out if the player
    return protectionFound
 
 def findCounterPrevention(count, counter, targetPL): # Find out if the player has any markers preventing them form gaining specific counters (Credits, Agenda Points etc)
-   debugNotify(">>> findCounterPrevention() for {}. Return immediately <<<".format(counter)) #Debug
-   return 0
+   debugNotify(">>> findCounterPrevention() for {}.".format(counter)) #Debug
    preventionFound = 0
    forfeit = None
    preventionType = 'preventCounter:{}'.format(counter)
@@ -1201,10 +1291,13 @@ def findCounterPrevention(count, counter, targetPL): # Find out if the player ha
       foundMarker = findMarker(card, preventionType)
       if not foundMarker: foundMarker = findMarker(card, forfeitType)
       if foundMarker: # If we found a counter prevention marker of the specific type we're looking for...
+         cardPrevention = 0 # Used just for the announcement
          while count > 0 and card.markers[foundMarker] > 0: # For each point of damage we do.
+            cardPrevention += 1
             preventionFound += 1 # We increase the prevention found by 1
             count -= 1 # We reduce how much counter we still need to add by 1
             card.markers[foundMarker] -= 1 # We reduce the specific counter prevention counters by 1
+         notify(" -- {} prevents {} {}".format(card,cardPrevention,counter))
          if count == 0: break # If we've found enough protection to alleviate all counters, stop the search.
    debugNotify("<<< findCounterPrevention() by returning: {}".format(preventionFound), 3)
    return preventionFound
@@ -1215,35 +1308,42 @@ def findCounterPrevention(count, counter, targetPL): # Find out if the player ha
 def scrAgenda(card, x = 0, y = 0,silent = False, forced = False):
    debugNotify(">>> scrAgenda(){}".format(extraASDebug())) #Debug
    mute()
+   if card.markers[mdict['Scored']] > 0:
+      notify ("This agenda has already been scored")
+      return
    if card.controller == me:
       cheapAgenda = False
       storeProperties(card)
-      if card.markers[mdict['Scored']] > 0:
-         notify ("This agenda has already been scored")
-         return
       if ds == 'runner' and card.Type != "Agenda":
          whisper ("You can only score Agendas")
          return
       if fetchProperty(card, 'Type') == "Agenda":
          if ds == 'runner': agendaTxt = 'LIBERATE'
          else: agendaTxt = 'SCORE'
-         if ds == 'corp' and card.markers[mdict['Advancement']] < findAgendaRequirement(card) and not forced:
-            if confirm("You have not advanced this agenda enough to score it. Bypass?"):
+         extraScoreMSG = '\n'
+         for c in table:
+            if not c.isFaceUp or c.highlight == InactiveColor: continue
+            if c.Name == 'Clot' and ds == 'corp': extraScoreMSG += '\n:\> Clot detected in play'
+            if c.Name == 'Chakana' and ds == 'corp': extraScoreMSG += '\n:\> Chakana detected in play'
+         agendaReq = findAgendaRequirement(card)
+         if ds == 'corp' and card.markers[mdict['Advancement']] < agendaReq and not forced:
+            if confirm("You have not advanced this agenda enough to score it ({} needed). Bypass?{}".format(agendaReq,extraScoreMSG)):
                cheapAgenda = True
                currentAdv = card.markers[mdict['Advancement']]
             else: return
-         elif not silent and not confirm("Do you want to {} agenda {}?".format(agendaTxt.lower(),fetchProperty(card, 'name'))): return
+         elif not silent and not confirm("Do you want to {} agenda {}?{}".format(agendaTxt.lower(),fetchProperty(card, 'name'),extraScoreMSG)): return
          if card.group == table: flipCard(card,True)
          if agendaTxt == 'SCORE' and chkTargeting(card,'SCORE') == 'ABORT':
             if card.group == table: flipCard(card,False)
             notify("{} cancels their action".format(me))
             return
          placeCard(card, action = 'SCORE')
+         clearAttachLinks(card)
          ap = num(fetchProperty(card,'Stat'))
          card.markers[mdict['Scored']] += 1
          me.counters['Agenda Points'].value += ap
          notify("{} {}s {} and receives {} agenda point(s)".format(me, agendaTxt.lower(), card, ap))
-         if cheapAgenda: notify(":::Warning:::{} did not have enough advance tokens ({} out of {})! ".format(card,currentAdv,card.Cost))
+         if cheapAgenda: notify(":::Warning:::{} did not have enough advancement counters ({} out of {})! ".format(card,currentAdv,agendaReq))
          playScoreAgendaSound(card)
          executePlayScripts(card,agendaTxt)
          autoscriptOtherPlayers('Agenda'+agendaTxt.capitalize()+'d',card) # The autoscripts triggered by this effect are using AgendaLiberated and AgendaScored as the hook
@@ -1296,8 +1396,7 @@ def accessTarget(group = table, x = 0, y = 0, noQuestionsAsked = False):
                and c.Type != 'Remote Server']
    for card in cardList:
       if chkGagarinTax(card) == 'ABORT': continue
-      origController[card._id] = card.controller # We store the card's original controller to know against whom to check for scripts (e.g. when accessing a rezzed encryption protocol)
-      #grabCardControl(card)
+      if chkFilmCritic(card) == 'ABORT': continue
       cFaceD = False
       if not card.isFaceUp:
          flipCard(card,True)
@@ -1309,18 +1408,35 @@ def accessTarget(group = table, x = 0, y = 0, noQuestionsAsked = False):
          if re.search(r'onAccess:',autoS):
             debugNotify(" accessRegex found!")
             if re.search(r'-ifNotInstalled',autoS): continue # -ifNotInstalled effects don't work with the Access Card shortcut.
+            if chkTagged(autoS, True) == 'ABORT': continue 
             notify("{} has just accessed a {}!".format(me,card.Name))
             debugNotify("Doing Remote Call with player = {}. card = {}, autoS = {}".format(me,card,autoS))
             remoteCall(card.owner, 'remoteAutoscript', [card,autoS])
             if re.search(r'-pauseRunner',autoS): # If the -pauseRunner modulator exists, we need to prevent the runner form trashing or scoring cards, as the amount of advancement tokens they have will be wiped and those may be important for the ambush effect.
-               #passCardControl(card,card.owner) # We pass control back to the original owner in case of a trap, to allow them to manipulate their own card (e.g. Toshiyuki Sakai)
                while not confirm("Ambush! You have stumbled into a {}\
                                \n(This card activates even when inactive. You need to wait for the corporation now.)\
                              \n\nHas the corporation decided whether or not to the effects of this ambush?\
                                \n(Pressing 'No' will send a ping to the corporation player to remind him to take action)\
                                  ".format(card.name)):
-                  rnd(1,1000)
                   notify(":::NOTICE::: {} is still waiting for {} to decide whether to use {} or not".format(me,card.owner,card))
+      attachments = fetchAttachments(card)
+      for att in attachments:
+         Autoscripts = CardsAS.get(att.model,'').split('||')
+         for autoS in Autoscripts:
+            if re.search(r'onHostAccess:',autoS):
+               debugNotify(" accessRegex found!")
+               if re.search(r'-ifNotInstalled',autoS): continue # -ifNotInstalled effects don't work with the Access Card shortcut.
+               if chkTagged(autoS, True) == 'ABORT': continue 
+               notify("{} has just accessed a card hosting a {}!".format(me,att.Name))
+               debugNotify("Doing Remote Call with player = {}. card = {}, autoS = {}".format(me,card,autoS))
+               remoteCall(att.owner, 'remoteAutoscript', [att,autoS])
+               if re.search(r'-pauseRunner',autoS): # If the -pauseRunner modulator exists, we need to prevent the runner form trashing or scoring cards, as the amount of advancement tokens they have will be wiped and those may be important for the ambush effect.
+                  while not confirm("Ambush! You have stumbled into a card hosting a {}\
+                                  \n(This card activates even when inactive. You need to wait for the corporation now.)\
+                                \n\nHas the corporation decided whether or not to the effects of this ambush?\
+                                  \n(Pressing 'No' will send a ping to the corporation player to remind him to take action)\
+                                    ".format(att.name)):
+                     notify(":::NOTICE::: {} is still waiting for {} to decide whether to use {} or not".format(me,att.owner,att))
       if card.group != table: whisper(":::Access Aborted::: Card has left the table!")
       else:
          #grabCardControl(card) # If the card is still in the table after any trap option resolves...
@@ -1394,9 +1510,6 @@ def accessTarget(group = table, x = 0, y = 0, noQuestionsAsked = False):
          else: pass
          remoteCall(card.controller,'postAccessFlipCHK',[card,cFaceD])
          card.highlight = None
-         if card.group == table and not card.markers[mdict['Scored']] and not card.markers[mdict['ScorePenalty']]: 
-            try: del origController[card._id] # We use a try: just in case...
-            except: pass
 
 def postAccessFlipCHK(card,PrevStatus): # So many fucking remote calls needed now...
    mute()
@@ -1419,6 +1532,9 @@ def RDaccessX(group = table, x = 0, y = 0,count = None): # A function which look
       barNotifyAll('#000000',"{} is resuming R&D Access".format(me))   
       skipIter = pauseRecovery[1] # This is the iter at which we'll resume from
       count = pauseRecovery[2] # The count of cards is what the previous access was, minus any removed cards (e.g.trashed ones)
+      if not count: 
+         setGlobalVariable('Paused Runner','False')
+         return 
    else:
       barNotifyAll('#000000',"{} is initiating R&D Access".format(me))
       if not count: count = askInteger("How many files are you able to access from the corporation's R&D?",1)
@@ -1443,12 +1559,17 @@ def RDaccessX(group = table, x = 0, y = 0,count = None): # A function which look
       notify(" -- {} is now accessing the {} card".format(me,numOrder(iter)))
       origController[RDtop[iter]._id] = targetPL # We store the card's original controller to know against whom to check for scripts (e.g. when accessing a rezzed encryption protocol)
       storeProperties(RDtop[iter])
+      if chkFilmCritic(RDtop[iter]) == 'ABORT': 
+         removedCards += 1
+         continue
+      #confirm("{} {}".format(RDtop[iter].Name,RDtop[iter].model)) 
       Autoscripts = CardsAS.get(RDtop[iter].model,'').split('||')
       debugNotify("Grabbed AutoScripts", 4)
       for autoS in Autoscripts:
          if re.search(r'onAccess:',autoS):
             if re.search(r'-ifInstalled',autoS): continue # -ifInstalled cards work only while on the table.
             if re.search(r'-ifNotAccessedInRD',autoS): continue # -ifNotInRD cards work only while not accessed from R&D.
+            if chkTagged(autoS, True) == 'ABORT': continue 
             debugNotify(" accessRegex found!")
             notify("{} has just accessed {}!".format(me,RDtop[iter].Name))
             remoteCall(RDtop[iter].owner, 'remoteAutoscript', [RDtop[iter],autoS])
@@ -1514,6 +1635,10 @@ def RDaccessX(group = table, x = 0, y = 0,count = None): # A function which look
          options = ["Leave where it is.","Force trash at no cost.\n(Only through card effects)",action1TXT]
       else:
          options = ["Leave where it is.","Force trash at no cost.\n(Only through card effects)"]
+      extraOptions = chkRDextraOptions()
+      existingOptions = len(options)
+      options.extend(extraOptions[0])
+      specialEffectCards = extraOptions[1]
       choice = SingleChoice(title, options, 'button')
       if choice == None: choice = 0
       if choice == 1:
@@ -1521,8 +1646,14 @@ def RDaccessX(group = table, x = 0, y = 0,count = None): # A function which look
          loopChk(RDtop[iter],'Type')
          notify("{} {} {} at no cost".format(me,uniTrash(),RDtop[iter]))
          removedCards += 1
-      elif choice == 2:
-         if cType == 'Agenda':
+      elif choice > 1:
+         if re.search(r'Maya',options[choice]):
+            oncePerTurn(specialEffectCards[choice - existingOptions], act = 'automatic')
+            me.Tags += 1
+            movetoBottomOfStack(RDtop[iter], silent = True)
+            removedCards += 1
+            notify("{} uses {} to send the accessed card to the bottom of the R&D and take a Tag".format(me,specialEffectCards[choice - existingOptions]))
+         elif cType == 'Agenda':
             if extraCredCost:
                reduceCost(RDtop[iter], 'LIBERATE', extraCredCost)
                rc = payCost(extraCredCost - reduction, "not free")
@@ -1576,7 +1707,15 @@ def ARCscore(group=table, x=0,y=0):
    agendaFound = False
    for card in ARC:
       debugNotify("Checking: {}.".format(card), 3) #Debug
-      origController[card._id] = targetPL # We store the card's original controller to know against whom to check for scripts (e.g. when accessing a rezzed encryption protocol)
+      if chkFilmCritic(card) == 'ABORT': continue
+      Autoscripts = CardsAS.get(card.model,'').split('||')
+      debugNotify("Grabbed AutoScripts", 4)
+      for autoS in Autoscripts:
+         if chkModulator(card, 'worksInArchives', 'onAccess'):
+            if chkTagged(autoS, True) == 'ABORT': continue 
+            debugNotify("-worksInArchives accessRegex found!")
+            notify("{} has just accessed a {}!".format(me,card.Name))
+            remoteCall(card.owner, 'remoteAutoscript', [card,autoS])
       if card.Type == 'Agenda' and not re.search(r'-disableAutoStealingInArchives',CardsAS.get(card.model,'')): 
          agendaFound = True
          #placeOnTable(card,0,0,False,RevealedColor)
@@ -1609,15 +1748,6 @@ def ARCscore(group=table, x=0,y=0):
          else: notify(":> {} opts not to steal {}".format(me,card))
          #if card.highlight == RevealedColor: changeCardGroup(card, ARC) # If the runner opted not to score the agenda, put it back into the deck.
          #if card.highlight == RevealedColor: card.moveTo(ARC) # If the runner opted not to score the agenda, put it back into the deck.
-      Autoscripts = CardsAS.get(card.model,'').split('||')
-      debugNotify("Grabbed AutoScripts", 4)
-      for autoS in Autoscripts:
-         if chkModulator(card, 'worksInArchives', 'onAccess'):
-            debugNotify("-worksInArchives accessRegex found!")
-            notify("{} has just accessed a {}!".format(me,card.Name))
-            remoteCall(card.owner, 'remoteAutoscript', [card,autoS])
-      try: del origController[card._id] # We use a try: just in case...
-      except: pass
    if not agendaFound: notify("{} has rumaged through {}'s archives but found no Agendas".format(Identity,targetPL))
    debugNotify("<<< ARCscore()")
 
@@ -1652,6 +1782,7 @@ def HQaccess(group=table, x=0,y=0, silent = False, directTargets = None):
       targetPL = fetchCorpPL()
       for revealedCard in revealedCards:
          origController[revealedCard._id] = targetPL # We store the card's original controller to know against whom to check for scripts (e.g. when accessing a rezzed encryption protocol)
+         if chkFilmCritic(revealedCard) == 'ABORT': continue
          accessRegex = re.search(r'onAccess:([^|]+)',CardsAS.get(revealedCard.model,''))
          if accessRegex:
             debugNotify(" accessRegex found! {}".format(accessRegex.group(1)), 2)
@@ -1660,6 +1791,7 @@ def HQaccess(group=table, x=0,y=0, silent = False, directTargets = None):
          for autoS in Autoscripts:
             if re.search(r'onAccess:',autoS):
                if re.search(r'-ifInstalled',autoS): continue # -ifInstalled cards work only while on the table.
+               if chkTagged(autoS, True) == 'ABORT': continue 
                debugNotify(" accessRegex found!")
                notify("{} has just accessed a {}!".format(me,revealedCard.Name))
                remoteCall(revealedCard.owner, 'remoteAutoscript', [revealedCard,autoS])
@@ -1838,6 +1970,7 @@ def expose(card, x = 0, y = 0, silent = False):
          card.isFaceUp = True
          if card.highlight == None: card.highlight = RevealedColor # we don't want to accidentally wipe dummy card highlight.
          if not silent: notify("{} exposed {}".format(me, card))
+         executePlayScripts(card,'EXPOSE')
    else:
       card.isFaceUp = False
       debugNotify("Peeking() at expose()")
@@ -2002,10 +2135,11 @@ def trashTargetPaid(group, x=0, y=0):
       cardType = fetchProperty(card, 'Type')
       if ds == 'corp':
          if cardType != 'Resource' and not confirm("Only resources can be trashed from the runner.\n\nBypass Restriction?"): continue
-         if not card.controller.Tags and not confirm("You can only Trash the runner's resources when they're tagged\n\nBypass Restriction?"): continue
+         if chkTagged('ifTagged1',True) == 'ABORT' and not confirm("You can only Trash the runner's resources when they're tagged\n\nBypass Restriction?"): continue
          ClickCost = useClick()
          if ClickCost == 'ABORT': return
-         intTrashCard(card, 2, ClickCost = ClickCost)
+         trashCost = 2 + (2 * len([c for c in table if c.Name == 'Wireless Net Pavilion']))
+         intTrashCard(card, trashCost, ClickCost = ClickCost)
       else:
          if cardType != 'Upgrade' and cardType != 'Asset' and not confirm("You can normally only pay to trash the Corp's Nodes and Upgrades.\n\nBypass Restriction?"): continue
          intTrashCard(card, fetchProperty(card, 'Stat')) # If we're a runner, trash with the cost of the card's trash.
@@ -2024,7 +2158,7 @@ def exileCard(card, silent = False):
       if card.markers[mdict['Scored']]:
          if card.Type == 'Agenda': APloss = num(card.Stat)
          else: APloss = card.markers[mdict['Scored']] # If we're trashing a card that's not an agenda but nevertheless counts as one, the amount of scored counters are the AP it provides.
-         me.counters['Agenda Points'].value -= APloss # Trashing Agendas for any reason, now takes they value away as well.
+         if card.highlight != DummyColor: me.counters['Agenda Points'].value -= APloss # Trashing Agendas for any reason, now takes they value away as well.
          notify("--> {} loses {} Agenda Points".format(me, APloss))
       if card.markers[mdict['ScorePenalty']]: # A card with Score Penalty counters was giving us minus agenda points. By exiling it, we recover those points.
          if card.Type == 'Agenda': APgain = num(card.Stat)
@@ -2032,7 +2166,7 @@ def exileCard(card, silent = False):
          me.counters['Agenda Points'].value += APgain 
          notify("--> {} recovers {} Agenda Points".format(me, APgain))
          chkAgendaVictory() # If we removed agenda points penalty (e.g. Data Dealer a Shi.Kyu) and that made us reach 7 agenda points, we can win the game at this point.
-      executePlayScripts(card,'TRASH') # We don't want to run automations on simply revealed cards.
+      if card.group == table and card.highlight != InactiveColor and card.isFaceUp: executePlayScripts(card,'TRASH') # We don't want to run automations on simply revealed cards.
       clearAttachLinks(card)
       changeCardGroup(card,card.owner.piles['Removed from Game'])
    if not silent: notify("{} exiled {}{}.".format(me,card,MUtext))
@@ -2051,10 +2185,11 @@ def uninstall(card, x=0, y=0, destination = 'hand', silent = False):
    else:
       if card.isFaceUp: MUtext = chkRAM(card, 'UNINSTALL')
       else: MUtext = ''
-      executePlayScripts(card,'UNINSTALL')
+      if card.isFaceUp and card.highlight != InactiveColor: executePlayScripts(card,'UNINSTALL')
       autoscriptOtherPlayers('CardUninstalled',card)
       clearAttachLinks(card)
-      card.moveTo(group)
+      changeCardGroup(card, group)
+      #card.moveTo(group)
    if not silent: notify("{} uninstalled {}{}.".format(me,card,MUtext))
 
 def useCard(card,x=0,y=0):
@@ -2097,7 +2232,7 @@ def prioritize(card,x=0,y=0):
 
 def stealthReserve(card,x=0,y=0):
    debugNotify(">>> prioritize(){}".format(extraASDebug())) #Debug
-   if card.highlight == None:
+   if card.highlight == None or card.highlight == NewCardColor:
       card.highlight = StealthColor
       notify ("{} reserves credits on {} for stealth cards.".format(me,card))
    else:
@@ -2173,6 +2308,7 @@ def inspectTargetCard(group, x = 0, y = 0): # This function shows the player the
 def currentHandSize(player = me):
    debugNotify(">>> currentHandSizel(){}".format(extraASDebug())) #Debug
    specialCard = getSpecial('Identity', player)
+   recalcHandSize()
    if specialCard.markers[mdict['BrainDMG']]: currHandSize =  player.counters['Hand Size'].value - specialCard.markers[mdict['BrainDMG']]
    else: currHandSize = player.counters['Hand Size'].value
    return currHandSize
@@ -2184,6 +2320,9 @@ def intPlay(card, cost = 'not free', scripted = False, preReduction = 0, retainP
    extraText = '' # We set this here, because the if clause that may modify this variable will not be reached in all cases. So we need to set it to null here to avoid a python error later.
    mute()
    chooseSide() # Just in case...
+   if identName == 'Apex' and card.Type == 'Resource' and not re.search(r'Virtual', getKeywords(card)):
+      whisper(":::ERROR::: I do not know how I could consume a {}".format(card))
+      return
    if not scripted: whisper("+++ Processing. Please Hold...")
    storeProperties(card)
    recalcMU()
@@ -2207,12 +2346,11 @@ def intPlay(card, cost = 'not free', scripted = False, preReduction = 0, retainP
    host = chkHostType(card)
    debugNotify("host received: {}".format(host), 4)
    if host:
-      try:
-         if host == 'ABORT':
-            me.Clicks += NbReq
-            if retainPos: card.moveTo(me.hand)
-            return 'ABORT'
-      except: # If there's an exception, it means that the host is a card object which cannot be compared to a string
+      if host == 'ABORT':
+         me.Clicks += NbReq
+         if retainPos: card.moveTo(me.hand)
+         return 'ABORT'
+      else: # If there's an exception, it means that the host is a card object which cannot be compared to a string
          debugNotify("Found Host", 2)
          hostTXT = ' on {}'.format(host) # If the card requires a valid host and we found one, we will mention it later.
    else:
@@ -2230,8 +2368,8 @@ def intPlay(card, cost = 'not free', scripted = False, preReduction = 0, retainP
    if card.Type == 'ICE' or card.Type == 'Agenda' or card.Type == 'Asset' or card.Type == 'Upgrade':
       placeCard(card, action, retainPos = retainPos)
       if fetchProperty(card, 'Type') == 'ICE': card.orientation ^= Rot90 # Ice are played sideways.
-      notify("{} to install a card.".format(ClickCost))
-      #card.isFaceUp = False # Now Handled by placeCard()
+      if re.search(r'Public',card.Keywords): notify("{} to install {}.".format(ClickCost,card))
+      else: notify("{} to install a card.".format(ClickCost))
    elif card.Type == 'Program' or card.Type == 'Event' or card.Type == 'Resource' or card.Type == 'Hardware':
       MUtext = chkRAM(card)
       if card.Type == 'Resource' and hiddenresource == 'yes':
@@ -2450,6 +2588,7 @@ def mulligan(group):
 # Pile Actions
 #------------------------------------------------------------------------------
 def shuffle(group):
+   mute()
    debugNotify(">>> shuffle(){}".format(extraASDebug())) #Debug
    group.shuffle()
 
@@ -2464,6 +2603,9 @@ def draw(group):
       else:
          whisper(":::ERROR::: No more cards in your stack")
       return
+   if ds == 'runner' and chkDrawPrevention(): 
+      whisper(":::ERROR::: You're not allowed to draw any more cards this turn")
+      return
    card = group.top()
    if ds == 'corp' and newturn: notify("--> {} performs the turn's mandatory draw.".format(me))
    else:
@@ -2473,7 +2615,7 @@ def draw(group):
       playClickDrawSound()
    changeCardGroup(card,me.hand)      
    dailyList = [card]
-   dailyBusiness = chkDailyBusinessShows() # Due to its automated wording, I have to hardcode this on every card draw.
+   dailyBusiness = chkDailyBusinessShows(group.player) # Due to its automated wording, I have to hardcode this on every card draw.
    if dailyBusiness:
       for c in group.top(dailyBusiness):
          dailyList.append(c)
@@ -2507,16 +2649,30 @@ def drawMany(group, count = None, destination = None, silent = False):
             notify(":::WARNING::: {} canceled the card draw effect to avoid decking themselves".format(me))
             return 0
       else: 
-         count = SSize
-         whisper("You do not have enough cards in your deck to complete this action. Will draw as many as possible")
+         if group.player != me and group == group.player.piles['R&D/Stack'] and destination == group.player.hand and ds == 'runner':
+            notify(":::ATTENTION::: {} cannot draw the full amount of cards. {} loses the game!".format(me,me))
+            reportGame('DeckDefeat')
+            return count
+         else:
+            count = SSize
+            whisper("You do not have enough cards in your deck to complete this action. Will draw as many as possible")
    if destination == me.hand and group == me.piles['R&D/Stack']: # Due to its automated wording, I have to hardcode this on every card draw.
       dailyList = []
-      dailyBusiness = chkDailyBusinessShows() 
+      dailyBusiness = chkDailyBusinessShows(group.player) 
+      #confirm(str(dailyBusiness))
    else: dailyBusiness = 0
+   drawn = 0
    for c in group.top(count):
+      if group.player == me and group == me.piles['R&D/Stack'] and destination == me.hand and ds == 'runner' and chkDrawPrevention(): 
+         whisper(":::ERROR::: You're not allowed to draw any more cards this turn")
+         count = drawn
+         continue
       if dailyBusiness:
          dailyList.append(c)
       changeCardGroup(c,destination)
+      if ds == 'runner' and destination == me.hand and group == me.piles['R&D/Stack']: # Code to store how many cards we've drawn for Genetics Pavilion
+         setGlobalVariable('Genetics Pavilion Memory',str(num(getGlobalVariable('Genetics Pavilion Memory')) + 1))
+         drawn += 1
       #c.moveTo(destination)
    if dailyBusiness:
       for c in group.top(dailyBusiness):
@@ -2530,10 +2686,10 @@ def drawMany(group, count = None, destination = None, silent = False):
    debugNotify("<<< drawMany() with return: {}".format(count), 3)
    return count
 
-def chkDailyBusinessShows():
+def chkDailyBusinessShows(player = me):
    found = 0
    for c in table:
-      if c.name == "Daily Business Show" and c.controller == me and c.orientation == Rot0:
+      if c.name == "Daily Business Show" and c.controller == player and c.orientation == Rot0:
          found += 1
          c.orientation = Rot90
    return found

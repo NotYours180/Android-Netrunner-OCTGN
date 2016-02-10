@@ -259,7 +259,8 @@ def recalcMU(): # Changing how MUs are tracked just for Ekomind...
    addedMU = 0
    paidMU = 0
    for card in table:
-      if card.controller == me and ds == 'runner' and card.highlight != InactiveColor and card.highlight != DummyColor and card.highlight != RevealedColor:
+      if card.controller == me and ds == 'runner' and card.highlight != InactiveColor and card.highlight != DummyColor and card.highlight != RevealedColor and card.isFaceUp:
+         if findMarker(card, 'Feelgood'): continue
          Autoscripts = CardsAS.get(card.model,'').split('||')
          for autoS in Autoscripts: 
             setMU = re.search(r'whileInPlay:SetTo([0-9]|Special)MU',autoS)
@@ -268,9 +269,12 @@ def recalcMU(): # Changing how MUs are tracked just for Ekomind...
                   if card.name == 'Ekomind': 
                      baseMU = len(me.hand)
                      #notify("setting MU to {} from {}".format(len(me.hand),card)) #Debug
+                  elif card.name == 'Brain Chip':
+                    baseMU += me.counters['Agenda Points'].value
                else: baseMU = num(setMU.group(1))
    for card in table:
-      if card.controller == me and ds == 'runner' and card.highlight != InactiveColor and card.highlight != DummyColor and card.highlight != RevealedColor:
+      if card.controller == me and ds == 'runner' and card.highlight != InactiveColor and card.highlight != DummyColor and card.highlight != RevealedColor and card.isFaceUp:
+         if findMarker(card, 'Feelgood'): continue
          Autoscripts = CardsAS.get(card.model,'').split('||')
          for autoS in Autoscripts: 
             extraMU = re.search(r'whileInPlay:Provide([0-9])MU',autoS)
@@ -278,7 +282,7 @@ def recalcMU(): # Changing how MUs are tracked just for Ekomind...
                addedMU += num(extraMU.group(1))
                #notify("found {} extra MU on {}".format(extraMU.group(1),card)) #Debug
    for card in table:
-      if card.controller == me and ds == 'runner' and fetchProperty(card,'Type') == 'Program':
+      if card.controller == me and ds == 'runner' and fetchProperty(card,'Type') == 'Program' and card.isFaceUp:
          MUreq = num(fetchProperty(card,'Requirement'))
          hostCards = eval(getGlobalVariable('Host Cards'))
          if hostCards.has_key(card._id): hostC = Card(hostCards[card._id])
@@ -297,10 +301,53 @@ def recalcMU(): # Changing how MUs are tracked just for Ekomind...
    me.MU = baseMU + addedMU - paidMU
    if me.MU < 0: notify(":::WARNING::: {} is currently exceeding their available Memory Units".format(me))
    
+def recalcHandSize(): # Changing how MUs are tracked just for Brain Chip...
+   mute()
+   baseHS = 5
+   addedHS = 0
+   for card in table:
+      if card.highlight != InactiveColor and card.highlight != DummyColor and card.highlight != RevealedColor and card.isFaceUp:
+         if card.Type == 'Agenda' and (card.controller.getGlobalVariable('ds') != 'corp' or not card.markers[mdict['Scored']]): continue # If it's an agenda, it needs to be scored by the corp to be considered active
+         if card.markers[mdict['Scored']] and card.controller.getGlobalVariable('ds') != 'corp': continue # Chairman Hiro shouldn't be active in the runner's score area.
+         if findMarker(card, 'Feelgood'): continue
+         Autoscripts = CardsAS.get(card.model,'').split('||')
+         for autoS in Autoscripts: 
+            setHS = re.search(r'whileInPlay:SetTo([0-9]|Special)HandSize-for(Runner|Corp)',autoS)
+            if setHS and setHS.group(2) == ds.capitalize(): # Both sides can affect each other's hand sizes
+               if setHS.group(1) == 'Special': # Nothing available yet
+                  if card.name == 'Theophilius Bagbiter' or card.name == 'Cerebral Imaging': baseHS = me.Credits
+               else: baseHS = num(setHS.group(1))
+   myIdent = getSpecial('Identity',me)
+   for marker in myIdent.markers: # Special reductions based on markers
+      if re.search(r'Gyri Labyrinth',marker[0]): addedHS -= 2 * card.markers[findMarker(card, 'Gyri Labyrinth')]
+      if re.search(r'Valley Grid',marker[0]): addedHS -= card.markers[findMarker(card, 'Valley Grid')]
+   for card in table:
+      if card.highlight != InactiveColor and card.highlight != DummyColor and card.highlight != RevealedColor and card.isFaceUp:
+         if card.Type == 'Agenda' and (card.controller.getGlobalVariable('ds') != 'corp' or not card.markers[mdict['Scored']]): continue # If it's an agenda, it needs to be scored by the corp to be considered active
+         if findMarker(card, 'Feelgood'): continue
+         Autoscripts = CardsAS.get(card.model,'').split('||')
+         #notify("### Testinmg {} withj autoS: {}".format(card,Autoscripts)) #Debug
+         for autoS in Autoscripts: 
+            extraHS = re.search(r'whileInPlay:(Provide|Steal)([0-9]|Special)HandSize-for(Runner|Corp)',autoS)
+            #if extraHS: confirm(str(extraHS.groups()))
+            if extraHS and extraHS.group(3) == ds.capitalize(): 
+               if extraHS.group(2) == 'Special': # Nothing available yet
+                  if card.name == 'Brain Chip': 
+                     addedHS += me.counters['Agenda Points'].value
+                  if card.name == 'Origami': 
+                     folds = len([c for c in table if c.Name == card.Name])
+                     addedHS += folds
+               else: 
+                  if extraHS.group(1) == 'Provide': addedHS += num(extraHS.group(2))
+                  else: addedHS -= num(extraHS.group(2))
+               #notify("found {} extra Hand Size on {}".format(extraHS.group(1),card)) #Debug
+   #confirm('baseHS = {}, addedHS = {}'.format(baseHS,addedHS)) # Debug
+   me.counters['Hand Size'].value = baseHS + addedHS
+   if me.counters['Hand Size'].value < 0: notify(":::WARNING::: {} is currently exceeding their maximum Hand Size!".format(me))
    
 def chkCloud(cloudCard = None): # A function which checks the table for cards which can be put in the cloud and thus return their used MUs
    debugNotify(">>> chkCloud(){}".format(extraASDebug())) #Debug
-   if not cloudCard: cards = [c for c in table if c.Type == 'Program']
+   if not cloudCard: cards = [c for c in table if c.Type == 'Program' and c.isFaceUp]
    else: cards = [cloudCard] # If we passed a card as a variable, we just check the cloud status of that card
    for card in cards:
       #notify("Cloud Checking {} with AS = {}".format(card,fetchProperty(card, 'AutoScripts'))) #Debug
@@ -413,13 +460,11 @@ def chkTargeting(card,action = 'PLAY'):
          if action == 'REZ' and re.search(r'onRez', autoS): foundMatchingScript = True
          if action == 'SCORE' and re.search(r'onScore', autoS): foundMatchingScript = True
          if action == 'PLAY' and re.search(r'onPlay', autoS): foundMatchingScript = True
-         if foundMatchingScript and re.search(r'ifTagged', autoS) and runnerPL.Tags == 0 and not re.search(r'isOptional', CardsAS.get(card.model,'')) and not re.search(r'doesNotBlock', CardsAS.get(card.model,'')):
+         if foundMatchingScript and chkTagged(CardsAS.get(card.model,'')) == 'ABORT' and not re.search(r'isOptional', CardsAS.get(card.model,'')):
             whisper("{} must be tagged in order to use this card".format(runnerPL))
             return 'ABORT'
    else: 
-      if re.search(r'ifTagged', CardsAA.get(card.model,'')) and runnerPL.Tags == 0 and not re.search(r'isOptional', CardsAS.get(card.model,'')) and not re.search(r'doesNotBlock', CardsAS.get(card.model,'')):
-         whisper("{} must be tagged in order to use this card".format(runnerPL))
-         return 'ABORT'
+      if chkTagged(CardsAA.get(card.model,'')) == 'ABORT' and not re.search(r'isOptional', CardsAA.get(card.model,'')): return 'ABORT'   
    if re.search(r'isExposeTarget', CardsAS.get(card.model,'')) and getSetting('ExposeTargetsWarn',True):
       if confirm("This card will automatically provide a bonus depending on how many non-exposed derezzed cards you've selected.\
                 \nMake sure you've selected all the cards you wish to expose and have peeked at them before taking this action\
@@ -528,20 +573,23 @@ def sendToTrash(card, pile = None): # A function which takes care of sending a c
    if pile == None: pile = card.owner.piles['Heap/Archives(Face-up)'] # I can't pass it as a function variable. OCTGN doesn't like it.
    debugNotify("Target Pile: {}'s {}".format(pile.player,pile.name))
    debugNotify("sendToTrash says previous group = {} and highlight = {}".format(card.group.name,card.highlight))
-   if card.group == table: 
-      if card.highlight != DummyColor: playTrashSound(card) # We don't want the trash sound for resident effects.
-      chkAgendaVictory() # Just in case we trashed the Board
-      remoteCall(findOpponent(),'chkAgendaVictory',[]) # Just in case we trashed the Board
-      autoscriptOtherPlayers('CardTrashed',card)
-   if card.group == table or chkModulator(card, 'runTrashScriptWhileInactive', 'onTrash'): 
+   if card.group == table:
+      if card.Type != 'Event' and card.Type != 'Operation': # Events and operations are not considered to be trashed when removed from the table
+         if card.highlight != DummyColor: playTrashSound(card) # We don't want the trash sound for resident effects.
+         chkAgendaVictory() # Just in case we trashed the Board
+         remoteCall(findOpponent(),'chkAgendaVictory',[]) # Just in case we trashed the Board
+         autoscriptOtherPlayers('CardTrashed',card)
+   else: autoscriptOtherPlayers('OutofPlayTrashed',card)
+   if (card.group == table and card.highlight != InactiveColor and card.isFaceUp) or chkModulator(card, 'runTrashScriptWhileInactive', 'onTrash'): 
       executePlayScripts(card,'TRASH') # We don't want to run automations on simply revealed cards, but some of them will like Director Haas.
    clearAttachLinks(card)
    if chkModulator(card, 'preventTrash', 'onTrash'): # IF the card has the preventTrash modulator, it's not supposed to be trashed.
       if chkModulator(card, 'ifAccessed', 'onTrash') and ds != 'runner': changeCardGroup(card,pile) # Unless it only has that modulator active during runner access. Then when the corp trashes it, it should trash normally.
+      if chkModulator(card, 'onlyPreventWhileActive', 'onTrash') and not card.isFaceUp: changeCardGroup(card,pile) # Unless it only has onlyPreventWhileActive modulator active and the card is not rezzed on the table.
    else: changeCardGroup(card,pile)
    debugNotify("<<< sendToTrash()", 3) #Debug   
    
-def findAgendaRequirement(card):
+def findAgendaRequirement(card): # Calculates how many advancement points an agenda needs to be scored.
    mute()
    debugNotify(">>> findAgendaRequirement() for card: {}".format(card)) #Debug
    AdvanceReq = num(fetchProperty(card, 'Cost'))
@@ -557,7 +605,10 @@ def findAgendaRequirement(card):
                if re.search(r'onlyOnce',autoS) and c.orientation == Rot90: continue # If the card has a once per-turn ability which has been used, ignore it
                if (re.search(r'excludeDummy',autoS) or re.search(r'CreateDummy',autoS)) and c.highlight == DummyColor: continue
                advanceMod = num(advanceModRegex.group(2)) * {'Decrease': -1}.get(advanceModRegex.group(1),1) * per(autoS, c, 0, findTarget(autoS, card = card))
-               debugNotify("advanceMod = {}".format(advanceMod))
+               debugNotify("advanceMod = {}".format(advanceMod))                        
+               if c.name == 'Traffic Jam': # Needs custom code
+                  for agenda in table:
+                     if agenda.Type == 'Agenda' and agenda.isFaceUp and card.Name == agenda.Name and agenda.controller == me: advanceMod += 1
                AdvanceReq += advanceMod
                if advanceMod: 
                   delayed_whisper("-- {} {}s advance requirement by {}".format(c,advanceModRegex.group(1),advanceMod))
@@ -587,6 +638,7 @@ def resetAll(): # Clears all the global variables in order to start a new game.
    setGlobalVariable('League','')
    setGlobalVariable('Access','DENIED')
    setGlobalVariable('accessAttempts','0')
+   me.setGlobalVariable('TripleID','None')
    newturn = False 
    endofturn = False
    currClicks = 0
@@ -629,7 +681,7 @@ def clearCurrents(type = None,card = None):
    debugNotify(">>> clearCurrents(){}".format(extraASDebug())) #Debug
    mute()
    for c in table:
-      if re.search('Current',getKeywords(c)):
+      if re.search('Current',getKeywords(c)) and c.isFaceUp:
          if card and card == c: continue # if a card variable has been passed, it's a newly placed current, which we don't want to trash.
          if not type: 
             intTrashCard(c, c.Stat, "free")
@@ -641,11 +693,12 @@ def clearCurrents(type = None,card = None):
             intTrashCard(c, c.Stat, "free")
             notify(":> {} scores their agenda and {} fades out".format(me,c))
             
-def chkCerebralStatic():
-   CS = None
+def chkBlankID(sideCheck):
+   BI = None
    for card in table:
-      if card.name == "Cerebral Static": CS = card
-   return CS
+      if sideCheck == 'runner' and card.name == "Cerebral Static": BI = card
+      if sideCheck == 'corp' and card.name == "Employee Strike": BI = card
+   return BI
    
 def calcAgendaStealCost(card):
    extraCreds = 0
@@ -654,6 +707,8 @@ def calcAgendaStealCost(card):
    for c in table:
       if c.name == 'Utopia Fragment' and c.isFaceUp and card.markers[mdict['Advancement']] and card.markers[mdict['Scored']]: # If there's a scored Utopia Fragment, then stealing costs a bit more.
          extraCreds += 2 * card.markers[mdict['Advancement']]
+      if c.name == 'Predictive Algorithm' and c.isFaceUp: # If there's an active predictive Algorithm then stealing costs are raised.
+         extraCreds += 2
    return extraCreds
 
 def chkAgendaVictory():
@@ -693,162 +748,12 @@ def isRezzable (card):
    if Type == "ICE" or Type == "Asset" or Type == "Upgrade" or Type == "Agenda": return True
    else: return False
  
-#---------------------------------------------------------------------------
-# Card Placement
-#---------------------------------------------------------------------------
-
-def placeCard(card, action = 'INSTALL', hostCard = None, type = None, retainPos = False):
-   debugNotify(">>> placeCard() with action: {}".format(action)) #Debug
-   if not hostCard:
-      hostCard = chkHostType(card, seek = 'DemiAutoTargeted')
-      if hostCard:
-         try:
-            if hostCard == 'ABORT': 
-               delayed_whisper(":::ERROR::: No Valid Host Targeted! Aborting Placement.") # We can pass a host from a previous function (e.g. see Personal Workshop)
-               return 'ABORT'
-         except: pass
-   if hostCard: hostMe(card,hostCard)
-   else:
-      global installedCount
-      if not type: 
-         type = fetchProperty(card, 'Type') # We can pass the type of card as a varialbe. This way we can pass one card as another.
-         if action != 'INSTALL' and type == 'Agenda':
-            if ds == 'corp': type = 'scoredAgenda'
-            else: type = 'liberatedAgenda'
-         if action == 'INSTALL' and re.search(r'Console',card.Keywords): type = 'Console'
-      if action == 'INSTALL' and type in CorporationCardTypes: CfaceDown = True
-      else: CfaceDown = False
-      debugNotify("Setting installedCount. Type is: {}, CfaceDown: {}".format(type, str(CfaceDown)), 3) #Debug
-      if installedCount.get(type,None) == None: installedCount[type] = 0
-      else: installedCount[type] += 1
-      debugNotify("installedCount is: {}. Setting loops...".format(installedCount[type]), 2) #Debug
-      loopsNR = installedCount[type] / (place[type][3]) 
-      loopback = place[type][3] * loopsNR 
-      if loopsNR and place[type][3] != 1: offset = 15 * (loopsNR % 3) # This means that in one loop the offset is going to be 0 and in another 15.
-      else: offset = 0
-      if card.Type == 'Server': yMod = flipServerModY # With the new custom card sizes, servers need their own mod to the y coordinates when the table is flipped.
-      else: yMod = flipModY
-      debugNotify("installedCount[type] is: {}.\nLoopsNR is: {}.\nLoopback is: {}\nOffset is: {}".format(installedCount[type],offset, loopback, offset), 3) #Debug
-      #if not retainPos: card.moveToTable(((place[type][0] + (((cwidth(card,0) + place[type][2]) * (installedCount[type] - loopback)) + offset) * place[type][4]) * flipBoard) + flipModX,(place[type][1] * flipBoard) + flipModY,CfaceDown) 
-      if not retainPos: placeOnTable(card,((place[type][0] + (((cwidth(card,0) + place[type][2]) * (installedCount[type] - loopback)) + offset) * place[type][4]) * flipBoard) + flipModX,(place[type][1] * flipBoard) + yMod,CfaceDown) 
-      # To explain the above, we place the card at: Its original location
-      #                                             + the width of the card
-      #                                             + a predefined distance from each other times the number of other cards of the same type
-      #                                             + the special offset in case we've done one or more loops
-      #                                             And all of the above, multiplied by +1/-1 (place[type][4]) in order to direct the cards towards the left or the right
-      #                                             And finally, the Y axis is always the same in ANR.
-      if type == 'Agenda' or type == 'Upgrade' or type == 'Asset': # camouflage until I create function to install them on specific Server, via targeting.
-         installedCount['Agenda'] = installedCount[type]
-         installedCount['Asset'] = installedCount[type]
-         installedCount['Upgrade'] = installedCount[type]
-      if not card.isFaceUp: 
-         debugNotify("Peeking() at placeCard()")
-         card.peek() # Added in octgn 3.0.5.47
-   debugNotify("<<< placeCard()", 3) #Debug
-
-def hostMe(card,hostCard):
-   debugNotify(">>> hostMe()") #Debug
-   unlinkHosts(card) # First we make sure we clear any previous hosting and return any markers to their right place.
-   hostCards = eval(getGlobalVariable('Host Cards'))
-   hostCards[card._id] = hostCard._id
-   setGlobalVariable('Host Cards',str(hostCards))
-   orgAttachments(hostCard)
-   debugNotify("<<< hostMe()") #Debug
-
-def orgAttachments(card):
-# This function takes all the cards attached to the current card and re-places them so that they are all visible
-# xAlg, yAlg are the algorithsm which decide how the card is placed relative to its host and the other hosted cards. They are always multiplied by attNR
-   debugNotify(">>> orgAttachments()") #Debug
-   attNR = 1
-   debugNotify(" Card Name : {}".format(card.name), 4)
-   if specialHostPlacementAlgs.has_key(card.name):
-      debugNotify("Found specialHostPlacementAlgs", 3)
-      xAlg = specialHostPlacementAlgs[card.name][0]
-      yAlg = specialHostPlacementAlgs[card.name][1]
-      debugNotify("Found Special Placement Algs. xAlg = {}, yAlg = {}".format(xAlg,yAlg), 2)
-   else: 
-      debugNotify("No specialHostPlacementAlgs", 3)
-      xAlg = 0 # The Default placement on the X axis, is to place the attachments at the same X as their parent
-      if card.controller == me: sideOffset = playerside # If it's our card, we need to assign it towards our side
-      else: sideOffset = playerside * -1 # Otherwise we assign it towards the opponent's side
-      yAlg =  -(cwidth(card) / 4 * sideOffset) # Defaults
-   hostCards = eval(getGlobalVariable('Host Cards'))
-   cardAttachements = [Card(att_id) for att_id in hostCards if hostCards[att_id] == card._id]
-   x,y = card.position
-   for attachment in cardAttachements:
-      debugNotify("Checking group of {}".format(attachment))
-      debugNotify("group name = {}".format(attachment.group.name))
-      if attachment.owner.getGlobalVariable('ds') == 'corp' and pileName(attachment.group) in ['R&D','Face-up Archives','HQ'] and attachment.Type != 'Operation':
-         debugNotify("card is faceDown")
-         cFaceDown = True
-      else: 
-         debugNotify("attachment.isFaceUp = {}".format(attachment.isFaceUp))
-         cFaceDown = False # If we're moving corp cards to the table, we generally move them face down
-      placeOnTable(attachment,x + ((xAlg * attNR) * flipBoard), y + ((yAlg * attNR) * flipBoard),cFaceDown)
-      if cFaceDown and attachment.owner == me: 
-         debugNotify("Peeking() at orgAttachments()")
-         attachment.peek() # If we moved our own card facedown to the table, we peek at it.
-      if fetchProperty(attachment, 'Type') == 'ICE': attachment.orientation = Rot90 # If we just moved an ICE to the table, we make sure it's turned sideways.
-      indexSet(attachment,len(cardAttachements) - attNR) # This whole thing has become unnecessary complicated because sendToBack() does not work reliably
-      debugNotify("{} index = {}".format(attachment,attachment.getIndex), 4) # Debug
-      attNR += 1
-      debugNotify("Moving {}, Iter = {}".format(attachment,attNR), 4)
-   indexSet(card,'front') # Because things don't work as they should :(
-   if debugVerbosity >= 4: # Checking Final Indices
-      for attachment in cardAttachements: notify("{} index = {}".format(attachment,attachment.getIndex)) # Debug
-   debugNotify("<<< orgAttachments()", 3) #Debug      
-
-def possess(daemonCard, programCard, silent = False, force = False):
-   debugNotify(">>> possess(){}".format(extraASDebug())) #Debug
-   #This function takes as arguments 2 cards. A Daemon and a program requiring MUs, then assigns the program to the Daemon, restoring the used MUs to the player.
-   hostType = re.search(r'Placement:([A-Za-z1-9:_ -]+)', fetchProperty(programCard, 'AutoScripts'))
-   if hostType and not re.search(r'Daemon',hostType.group(1)):
-      delayed_whisper("This card cannot be hosted on a Daemon as it needs a special host type")
-      return 'ABORT'
-   count = num(programCard.properties["Requirement"])
-   debugNotify("Looking for custom hosting marker", 2)
-   customHostMarker = findMarker(daemonCard, '{} Hosted'.format(daemonCard.name)) # We check if the card has a custom hosting marker which we use when the hosting is forced
-   debugNotify("Custom hosting marker: {}".format(customHostMarker), 2)
-   hostCards = eval(getGlobalVariable('Host Cards'))   
-   if not force and (count > daemonCard.markers[mdict['DaemonMU']] and not customHostMarker):
-      delayed_whisper(":::ERROR::: {} has already hosted the maximum amount of programs it can hold.".format(daemonCard))
-      return 'ABORT'
-   elif force and not customHostMarker: # .get didn't work on card.markers[] :-(
-      delayed_whisper(":::ERROR::: {} has already hosted the maximum amount of programs it can hold.".format(daemonCard))
-      return 'ABORT'
-   elif hostCards.has_key(programCard._id):
-      delayed_whisper(":::ERROR::: {} is already hosted in {}.".format(programCard,Card(hostCards[programCard._id])))
-      return 'ABORT'
-   else:
-      debugNotify("We have a valid daemon host", 2) #Debug
-      hostCards[programCard._id] = daemonCard._id
-      setGlobalVariable('Host Cards',str(hostCards))
-      if not customHostMarker:
-         daemonCard.markers[mdict['DaemonMU']] -= count
-         if re.search(r'Daemon',fetchProperty(programCard, 'Keywords')): # If it's a daemon, we do not want to give it the same daemon token, as that's going to be reused for other programs and we do not want that.
-            TokensX('Put{}Daemon Hosted MU-isSilent'.format(count), '', programCard)
-         else: programCard.markers[mdict['DaemonMU']] += count
-      else:
-         daemonCard.markers[customHostMarker] -= 1 # If this a forced host, the host should have a special counter on top of it...
-         programCard.markers[customHostMarker] += 1 # ...that we move to the hosted program to signify it's hosted
-         Autoscripts = CardsAS.get(daemonCard.model,'').split('||')
-         debugNotify("Daemon Autoscripts found = {}".format(Autoscripts))
-         for autoS in Autoscripts:
-            markersRegex = re.search(r'onHost:(.*)',autoS)            
-            if markersRegex:
-               debugNotify("markersRegex groups = {}".format(markersRegex.groups()))
-               for autoS in markersRegex.group(1).split('$$'):
-                  redirect(autoS, programCard, announceText = None, notificationType = 'Quick', X = 0)
-                  #TokensX(markersRegex.group(1),'',programCard)
-            else: debugNotify("No onHost scripts found in {}".format(autoS))
-      if customHostMarker and customHostMarker[0] == 'Scheherazade Hosted': pass
-      else: programCard.owner.MU += count # We return the MUs the card would be otherwise using.
-      if not silent: notify("{} installs {} into {}".format(me,programCard,daemonCard))
-   debugNotify("<<< possess()", 3) #Debug   
+def chkTripleID(): # Function which double checks that the player has selected a Triple ID variant if they're playing one.
+   tripleIDs = ['Jinteki Biotech']
+   if Identity.Name in tripleIDs and  me.getGlobalVariable('TripleID') == 'None': CustomScript(Identity, 'USE') # If the player didn't yet select their department, we forcing them to do it now so that they do not forget.
    
 def chkDmgSpecialEffects(dmgType, count):
 # This function checks for special card effects on the table that hijack normal damage effects and do something extra or differently
-# At the moment it's used for the two Chronos Protocol IDs.
    debugNotify(">>> chkDmgSpecialEffects()") #Debug
    usedDMG = 0
    replaceDMGAnnounce = False
@@ -924,6 +829,210 @@ def HasbroCP(card,count): # A Function called remotely for the runner player whi
             c.moveTo(me.piles['Removed from Game'])      
             notify("=> Extra {} scrubbed from Grip".format(exiledC))
    debugNotify("<<< HasbroCP()") #Debug
+   
+def chkDrawPrevention():
+   # Checking for custom effects which might prevent the player from drawing cards.
+   prevention = False
+   for card in table:
+      if card.Name == 'Lockdown' and card.markers[mdict['Power']]: prevention = True
+      if card.Name == 'Genetics Pavilion' and card.isFaceUp and num(getGlobalVariable('Genetics Pavilion Memory')) >= 2: prevention = True
+   return prevention
+   
+def chkRDextraOptions():
+   extraOptions = []
+   cardObjects = []
+   for c in table:
+      if c.name == "Maya" and oncePerTurn(c, act = 'dryRun') != 'ABORT':
+         extraOptions.append("Add to the bottom of R&D and take 1 tag (Maya)")
+         cardObjects.append(c) # We need to create a list of the respective card objects which trigger each effect as they may need to be modified by their effect.
+         #oncePerTurn(c, act = 'automatic')
+   return (extraOptions,cardObjects)
+   
+def calcInfluence(card, allianceCounts): # Checks if any card's influence is changed due to Alliance mechanics
+   if card.Name == "Heritage Committee":
+      if allianceCounts['JintekiCount'] >= 6: influence = 0
+      else: influence = 2
+   elif card.Name == "Mumba Temple":
+      if allianceCounts['ICEcount']  > 15: influence = 2
+      else: influence = 0
+   elif card.Name == "Museum of History":
+      if len(me.piles['R&D/Stack']) >= 50: influence = 0
+      else: influence = 2      
+   else: influence = num(card.Influence)
+   return influence   
+   
+def storeAlliances(): # Used to precount the influence required for Alliance cards.
+   allianceCounts = {'JintekiCount':0,'ICEcount':0}
+   for c in me.piles['R&D/Stack']:
+      if c.Faction == "Jinteki" and not re.search(r'Alliance',c.Keywords): allianceCounts['JintekiCount'] += 1
+      if c.Type == 'ICE': allianceCounts['ICEcount'] += 1
+   return allianceCounts   
+   
+def checkCardLimits(cardName):
+   if cardName == "Ramujan-reliant 550 BMI": limit = 6
+   else: limit = 3
+   return limit
+     
+#---------------------------------------------------------------------------
+# Card Placement
+#---------------------------------------------------------------------------
+
+def placeCard(card, action = 'INSTALL', hostCard = None, type = None, retainPos = False):
+   debugNotify(">>> placeCard() with action: {}".format(action)) #Debug
+   if not hostCard:
+      hostCard = chkHostType(card, seek = 'DemiAutoTargeted')
+      if hostCard:
+         try:
+            if hostCard == 'ABORT': 
+               delayed_whisper(":::ERROR::: No Valid Host Targeted! Aborting Placement.") # We can pass a host from a previous function (e.g. see Personal Workshop)
+               return 'ABORT'
+         except: pass
+   if hostCard: hostMe(card,hostCard)
+   else:
+      global installedCount
+      if not type: 
+         type = fetchProperty(card, 'Type') # We can pass the type of card as a varialbe. This way we can pass one card as another.
+         if action != 'INSTALL' and type == 'Agenda':
+            if ds == 'corp': type = 'scoredAgenda'
+            else: type = 'liberatedAgenda'
+         if action == 'INSTALL' and re.search(r'Console',card.Keywords): type = 'Console'
+      if action == 'INSTALL' and type == 'Apex': 
+         CfaceDown = True
+         type = ['Hardware','Resource','Program'][rnd(0,2)] # Apex installs its face down cards randomly to avoid giving out info.
+      elif action == 'INSTALL' and type in CorporationCardTypes and not re.search(r'Public',card.Keywords): CfaceDown = True
+      else: CfaceDown = False
+      debugNotify("Setting installedCount. Type is: {}, CfaceDown: {}".format(type, str(CfaceDown)), 3) #Debug
+      if installedCount.get(type,None) == None: installedCount[type] = 0
+      else: installedCount[type] += 1
+      debugNotify("installedCount is: {}. Setting loops...".format(installedCount[type]), 2) #Debug
+      loopsNR = installedCount[type] / (place[type][3]) 
+      loopback = place[type][3] * loopsNR 
+      if loopsNR and place[type][3] != 1: offset = 15 * (loopsNR % 3) # This means that in one loop the offset is going to be 0 and in another 15.
+      else: offset = 0
+      if card.Type == 'Server': yMod = flipServerModY # With the new custom card sizes, servers need their own mod to the y coordinates when the table is flipped.
+      else: yMod = flipModY
+      debugNotify("installedCount[type] is: {}.\nLoopsNR is: {}.\nLoopback is: {}\nOffset is: {}".format(installedCount[type],offset, loopback, offset), 3) #Debug
+      #if not retainPos: card.moveToTable(((place[type][0] + (((cwidth(card,0) + place[type][2]) * (installedCount[type] - loopback)) + offset) * place[type][4]) * flipBoard) + flipModX,(place[type][1] * flipBoard) + flipModY,CfaceDown) 
+      if not retainPos: placeOnTable(card,((place[type][0] + (((cwidth(card,0) + place[type][2]) * (installedCount[type] - loopback)) + offset) * place[type][4]) * flipBoard) + flipModX,(place[type][1] * flipBoard) + yMod,CfaceDown) 
+      # To explain the above, we place the card at: Its original location
+      #                                             + the width of the card
+      #                                             + a predefined distance from each other times the number of other cards of the same type
+      #                                             + the special offset in case we've done one or more loops
+      #                                             And all of the above, multiplied by +1/-1 (place[type][4]) in order to direct the cards towards the left or the right
+      #                                             And finally, the Y axis is always the same in ANR.
+      if type == 'Agenda' or type == 'Upgrade' or type == 'Asset': # camouflage until I create function to install them on specific Server, via targeting.
+         installedCount['Agenda'] = installedCount[type]
+         installedCount['Asset'] = installedCount[type]
+         installedCount['Upgrade'] = installedCount[type]
+      if not card.isFaceUp: 
+         debugNotify("Peeking() at placeCard()")
+         card.peek() # Added in octgn 3.0.5.47
+   debugNotify("<<< placeCard()", 3) #Debug
+
+def hostMe(card,hostCard):
+   debugNotify(">>> hostMe()") #Debug
+   unlinkHosts(card) # First we make sure we clear any previous hosting and return any markers to their right place.
+   hostCards = eval(getGlobalVariable('Host Cards'))
+   hostCards[card._id] = hostCard._id
+   setGlobalVariable('Host Cards',str(hostCards))
+   orgAttachments(hostCard)
+   debugNotify("<<< hostMe()") #Debug
+
+def orgAttachments(card):
+# This function takes all the cards attached to the current card and re-places them so that they are all visible
+# xAlg, yAlg are the algorithsm which decide how the card is placed relative to its host and the other hosted cards. They are always multiplied by attNR
+   debugNotify(">>> orgAttachments()") #Debug
+   attNR = 1
+   debugNotify(" Card Name : {}".format(card.name), 4)
+   if specialHostPlacementAlgs.has_key(card.name):
+      debugNotify("Found specialHostPlacementAlgs", 3)
+      xAlg = specialHostPlacementAlgs[card.name][0]
+      yAlg = specialHostPlacementAlgs[card.name][1]
+      debugNotify("Found Special Placement Algs. xAlg = {}, yAlg = {}".format(xAlg,yAlg), 2)
+   else: 
+      debugNotify("No specialHostPlacementAlgs", 3)
+      xAlg = 0 # The Default placement on the X axis, is to place the attachments at the same X as their parent
+      if card.controller == me: sideOffset = playerside # If it's our card, we need to assign it towards our side
+      else: sideOffset = playerside * -1 # Otherwise we assign it towards the opponent's side
+      yAlg =  -(cwidth(card) / 4 * sideOffset) # Defaults
+   hostCards = eval(getGlobalVariable('Host Cards'))
+   cardAttachements = [Card(att_id) for att_id in hostCards if hostCards[att_id] == card._id]
+   x,y = card.position
+   for attachment in cardAttachements:
+      debugNotify("Checking group of {}".format(attachment))
+      debugNotify("group name = {}".format(attachment.group.name))
+      if attachment.owner.getGlobalVariable('ds') == 'corp' and pileName(attachment.group) in ['R&D','Face-up Archives','HQ'] and attachment.Type != 'Operation':
+         debugNotify("card is faceDown")
+         cFaceDown = True
+      elif card.Name == 'Street Peddler':
+         debugNotify("card is faceDown")
+         cFaceDown = True
+      else: 
+         debugNotify("attachment.isFaceUp = {}".format(attachment.isFaceUp))
+         cFaceDown = False # If we're moving corp cards to the table, we generally move them face down
+      placeOnTable(attachment,x + ((xAlg * attNR) * flipBoard), y + ((yAlg * attNR) * flipBoard),cFaceDown)
+      if cFaceDown and attachment.owner == me: 
+         debugNotify("Peeking() at orgAttachments()")
+         attachment.peek() # If we moved our own card facedown to the table, we peek at it.
+      if fetchProperty(attachment, 'Type') == 'ICE': attachment.orientation = Rot90 # If we just moved an ICE to the table, we make sure it's turned sideways.
+      indexSet(attachment,len(cardAttachements) - attNR) # This whole thing has become unnecessary complicated because sendToBack() does not work reliably
+      debugNotify("{} index = {}".format(attachment,attachment.getIndex), 4) # Debug
+      attNR += 1
+      debugNotify("Moving {}, Iter = {}".format(attachment,attNR), 4)
+   indexSet(card,'front') # Because things don't work as they should :(
+   if debugVerbosity >= 4: # Checking Final Indices
+      for attachment in cardAttachements: notify("{} index = {}".format(attachment,attachment.getIndex)) # Debug
+   debugNotify("<<< orgAttachments()", 3) #Debug      
+
+def possess(daemonCard, programCard, silent = False, force = False):
+   debugNotify(">>> possess(){}".format(extraASDebug())) #Debug
+   #This function takes as arguments 2 cards. A Daemon and a program requiring MUs, then assigns the program to the Daemon, restoring the used MUs to the player.
+   if programCard == daemonCard: return # To avoid infinite loops
+   hostType = re.search(r'Placement:([A-Za-z1-9:_ -]+)', fetchProperty(programCard, 'AutoScripts'))
+   if hostType and not re.search(r'Daemon',hostType.group(1)):
+      delayed_whisper("This card cannot be hosted on a Daemon as it needs a special host type")
+      return 'ABORT'
+   count = num(programCard.properties["Requirement"])
+   debugNotify("Looking for custom hosting marker", 2)
+   customHostMarker = findMarker(daemonCard, '{} Hosted'.format(daemonCard.name)) # We check if the card has a custom hosting marker which we use when the hosting is forced
+   debugNotify("Custom hosting marker: {}".format(customHostMarker), 2)
+   hostCards = eval(getGlobalVariable('Host Cards'))   
+   if not force and (count > daemonCard.markers[mdict['DaemonMU']] and not customHostMarker):
+      delayed_whisper(":::ERROR::: {} has already hosted the maximum amount of programs it can hold.".format(daemonCard))
+      return 'ABORT'
+   elif force and not customHostMarker: # .get didn't work on card.markers[] :-(
+      delayed_whisper(":::ERROR::: {} has already hosted the maximum amount of programs it can hold.".format(daemonCard))
+      return 'ABORT'
+   elif hostCards.has_key(programCard._id):
+      delayed_whisper(":::ERROR::: {} is already hosted in {}.".format(programCard,Card(hostCards[programCard._id])))
+      return 'ABORT'
+   else:
+      debugNotify("We have a valid daemon host", 2) #Debug
+      hostCards[programCard._id] = daemonCard._id
+      setGlobalVariable('Host Cards',str(hostCards))
+      if not customHostMarker:
+         daemonCard.markers[mdict['DaemonMU']] -= count
+         if re.search(r'Daemon',fetchProperty(programCard, 'Keywords')): # If it's a daemon, we do not want to give it the same daemon token, as that's going to be reused for other programs and we do not want that.
+            TokensX('Put{}Daemon Hosted MU-isSilent'.format(count), '', programCard)
+         else: programCard.markers[mdict['DaemonMU']] += count
+      else:
+         daemonCard.markers[customHostMarker] -= 1 # If this a forced host, the host should have a special counter on top of it...
+         programCard.markers[customHostMarker] += 1 # ...that we move to the hosted program to signify it's hosted
+         Autoscripts = CardsAS.get(daemonCard.model,'').split('||')
+         debugNotify("Daemon Autoscripts found = {}".format(Autoscripts))
+         for autoS in Autoscripts:
+            markersRegex = re.search(r'onHost:(.*)',autoS)            
+            if markersRegex:
+               debugNotify("markersRegex groups = {}".format(markersRegex.groups()))
+               for autoS in markersRegex.group(1).split('$$'):
+                  redirect(autoS, programCard, announceText = None, notificationType = 'Quick', X = 0)
+                  #TokensX(markersRegex.group(1),'',programCard)
+            else: debugNotify("No onHost scripts found in {}".format(autoS))
+      if customHostMarker and customHostMarker[0] == 'Scheherazade Hosted': pass
+      else: programCard.owner.MU += count # We return the MUs the card would be otherwise using.
+      if not silent: notify("{} installs {} into {}".format(me,programCard,daemonCard))
+   debugNotify("<<< possess()", 3) #Debug   
+   
 #------------------------------------------------------------------------------
 # Switches
 #------------------------------------------------------------------------------
@@ -1100,6 +1209,9 @@ def BUTTON_OK(group = None,x=0,y=0):
 def BUTTON_Wait(group = None,x=0,y=0):  
    notify("--- Wait! {} wants to react.".format(me))
    playButtonSound('Wait')
+   
+def BUTTON_Thinking(group = None,x=0,y=0):  
+   notify("--- {} is thinking....".format(me))
 #------------------------------------------------------------------------------
 #  Online Functions
 #------------------------------------------------------------------------------
@@ -1470,8 +1582,11 @@ def DebugCard(card, x=0, y=0):
           \nPrinted Keywords: {}\
           \nCost: {}\
           \nCard ID: {}\
+          \nCard AS: {}\
+          \nCard AA: {}\
+          \ncard GUID: {}\
           \n----------------------\
-          ".format(Stored_Name.get(card._id,'NULL'), card.Name, Stored_Type.get(card._id,'NULL'), card.Type, Stored_Keywords.get(card._id,'NULL'), card.Keywords, Stored_Cost.get(card._id,'NULL'),card._id))
+          ".format(Stored_Name.get(card._id,'NULL'), card.Name, Stored_Type.get(card._id,'NULL'), card.Type, Stored_Keywords.get(card._id,'NULL'), card.Keywords, Stored_Cost.get(card._id,'NULL'),card._id,CardsAS.get(card.model,''),CardsAA.get(card.model,''),card.model))
    if debugVerbosity >= 4: 
       #notify("Stored_AS: {}".format(str(Stored_AutoScripts)))
       notify("Downloaded AA: {}".format(str(CardsAA)))

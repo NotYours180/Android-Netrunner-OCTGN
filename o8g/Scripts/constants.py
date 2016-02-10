@@ -56,7 +56,7 @@ regexHooks = dict( # A dictionary which holds the regex that then trigger each c
                   TraceX =             re.compile(r'(?<![<,+-])Trace([0-9]+)'),
                   InflictX =           re.compile(r'(?<![<,+-])Inflict([0-9]+)'),
                   RetrieveX =          re.compile(r'(?<![<,+-])Retrieve([0-9]+)'),
-                  ModifyStatus =       re.compile(r'(?<![<,+-])(Rez|Derez|Expose|Trash|Uninstall|Possess|Exile|Rework|Install|Score|Rehost|SendToBottom)(Target|Host|Multi|Myself)'),
+                  ModifyStatus =       re.compile(r'(?<![<,+-])(Rez|Derez|Expose|Trash|Uninstall|Possess|Exile|Rework|Install|Score|Rehost|SendToBottom|Reserve|ApexFlip)(Target|Host|Multi|Myself)'),
                   SimplyAnnounce =     re.compile(r'(?<![<,+-])SimplyAnnounce'),
                   ChooseKeyword =      re.compile(r'(?<![<,+-])ChooseKeyword'),
                   CustomScript =       re.compile(r'(?<![<,+-])CustomScript'),
@@ -65,9 +65,14 @@ regexHooks = dict( # A dictionary which holds the regex that then trigger each c
                   SetVarX =            re.compile(r'(?<![<,+-])SetVar'))
 
 specialHostPlacementAlgs = { # A Dictionary which holds tuples of X and Y placement offsets, for cards which place their hosted cards differently to normal, such as Personal Workshop
-                              'Personal Workshop' :            (-32,0),
-                              'The Supplier'      :            (-32,0),
-                              'Awakening Center'  :            (-32,0)
+                              'Personal Workshop'     :            (-32,0),
+                              'The Supplier'          :            (-32,0),
+                              'Awakening Center'      :            (-32,0),
+                              'London Library'        :            (-32,0),
+                              'Street Peddler'        :            (-32,0),
+                              'Bookmark'              :            (-32,0),
+                              'Media Blitz'           :            (-64,0),
+                              'Off-Campus Apartment'  :            (-32,0)
                            }
                            
                   
@@ -181,3 +186,17 @@ knownLeagues = { # The known leagues. Now the game will confirm this was a leagu
 
 SuperchargedMsg = "{} is Supercharging their systems.\
              \n+=+ Their presence on the grid is enhanced!".format(me)                        
+
+NAPDMW = [ # NAPD Most Wanted List
+            'Cerberus "Lady" H1',
+            'Clone Chip',
+            'Desperado',
+            'Parasite',
+            'Pre-Paid Voice PAD',
+            'Yog.0',
+            'Architect',
+            'AstroScript Pilot Program',
+            'Eli 1.0',
+            'NAPD Contract',
+            'SanSan City Grid'
+         ]

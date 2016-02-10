@@ -152,7 +152,7 @@ def information(Message):
       Application.EnableVisualStyles()
       form = OKWindow(Message)
       form.BringToFront()
-      form.ShowDialog()
+      showWinForm(form)
    else: 
       confirm(Message)
    
@@ -294,7 +294,7 @@ def SingleChoice(title, options, type = 'button', default = 0, cancelButton = Tr
          Application.EnableVisualStyles()
          form = SingleChoiceWindow(title, optChunks[optCurrent], type, default, pages = len(optChunks), cancelButtonBool = cancelButton, cancelName = cancelName)
          form.BringToFront()
-         form.ShowDialog()
+         showWinForm(form)
          choice = form.getIndex()
          debugNotify("choice is: {}".format(choice), 2)
          if choice == "Next Page": 
@@ -464,7 +464,7 @@ def multiChoice(title, options,card): # This displays a choice where the player 
          else: CPType = 'Control Panel'
          debugNotify("About to open form")
          form = MultiChoiceWindow(title, optChunks[optCurrent], CPType, pages = len(optChunks), currPage = optCurrent, existingChoices = currChoices) # We create an object called "form" which contains an instance of the MultiChoice windows form.
-         form.ShowDialog() # We bring the form to the front to allow the user to make their choices
+         showWinForm(form) # We bring the form to the front to allow the user to make their choices
          choices = form.getIndex() # Once the form is closed, we check an internal variable within the form object to grab what choices they made
          if choices == "Next Page": 
             debugNotify("Going to next page", 3)
@@ -553,7 +553,7 @@ def storeProperties(card, forced = False): # Function that grabs a cards importa
       if (card.Name == '?' and Stored_Name.get(card._id,'?') == '?') or forced:
          if not card.isFaceUp and ((card.group == table and card.owner == me) or forced): # If card is not ours and it's face down, we cannot store its properties without revealing it to the player via the full game log
                                                                                              # See https://github.com/kellyelton/OCTGN/issues/879
-            card.peek()
+            #card.peek()
             loopChk(card)
       if (Stored_Name.get(card._id,'?') == '?' and card.Name != '?') or (Stored_Name.get(card._id,'?') != card.Name and card.Name != '?') or forced:
          debugNotify("{} not stored. Storing...".format(card), 3)
@@ -573,12 +573,12 @@ def storeProperties(card, forced = False): # Function that grabs a cards importa
 def fetchProperty(card, property): 
    mute()
    debugNotify(">>> fetchProperty(){}".format(extraASDebug())) #Debug
-   if property == 'name' or property == 'Name': currentValue = Stored_Name.get(card._id,card.Name)
-   elif property == 'Cost': currentValue = Stored_Cost.get(card._id,card.Cost)
-   elif property == 'Type': currentValue = Stored_Type.get(card._id,card.Type)
-   elif property == 'Keywords': currentValue = Stored_Keywords.get(card._id,card.Keywords)
-   elif property == 'AutoScripts': currentValue = Stored_AutoScripts.get(card._id,CardsAA.get(card.model,''))
-   elif property == 'AutoActions': currentValue = Stored_AutoActions.get(card._id,CardsAS.get(card.model,''))
+   if property == 'name' or property == 'Name': currentValue = card.Name
+   elif property == 'Cost': currentValue = card.Cost
+   elif property == 'Type': currentValue = card.Type
+   elif property == 'Keywords': currentValue = card.Keywords
+   elif property == 'AutoScripts': currentValue = CardsAS.get(card.model,'')
+   elif property == 'AutoActions': currentValue = CardsAA.get(card.model,'')
    else: currentValue = card.properties[property]
    if currentValue == '?' or currentValue == 'Card':
       debugNotify("Card property: {} unreadable = {}".format(property,currentValue), 4) #Debug
@@ -650,9 +650,18 @@ def oncePerTurn(card, x = 0, y = 0, silent = False, act = 'manual'):
          if not silent and act != 'dryRun': notify('{} activates the once-per-turn ability of {} another time'.format(me, card))
    else:
       if not silent and act != 'dryRun': notify('{} activates the once-per-turn ability of {}'.format(me, card))
-   if act != 'dryRun': 
-      if card.controller != me: remoteCall(card.controller,'rotCard',card) # Cannot remote call this or ABT installing more than 1 ICE will trigger HB:ETF ability 3 times
-      else: card.orientation = Rot90
+   if act != 'dryRun':
+      extraUse = False
+      if not findMarker(card, 'Gene Conditioned') and re.search('Genetics',getKeywords(card)):
+         for c in table:          
+            if c.Name == 'Gene Conditioning Shoppe':
+               TokensX('Put1Gene Conditioned', '', card)
+               extraUse = True
+               notify(":> {}'s {} enables {} to be used a second time this turn".format(c.controller,c,card))
+               break
+      if not extraUse:
+         if card.controller != me: remoteCall(card.controller,'rotCard',card) # Cannot remote call this or ABT installing more than 1 ICE will trigger HB:ETF ability 3 times
+         else: card.orientation = Rot90
    debugNotify("<<< oncePerTurn() exit OK", 3) #Debug
 
 def chkRestrictionMarker(card, Autoscript, silent = False, act = 'manual'): # An additional oncePerTurn restriction, that works with markers (with cards that have two different once-per-turn abilities)
@@ -708,7 +717,7 @@ def chkModulator(card, modulator, scriptType = 'onPlay'): # Checks the card's au
    debugNotify("<<< chkModulator() with return {}".format(ModulatorExists)) #Debug
    return ModulatorExists
 
-def fetchHost(card):
+def fetchHost(card): # Returns the card object which is set to be hosting 'card'
    debugNotify(">>> fetchHost()") #Debug
    host = None
    hostCards = eval(getGlobalVariable('Host Cards'))
@@ -716,6 +725,15 @@ def fetchHost(card):
    if hostID: host = Card(hostID) 
    debugNotify("<<< fetchHost() with return {}".format(host)) #Debug
    return host
+   
+def fetchAttachments(card): # Returns a list of card objects with all attachments of 'card'.
+   debugNotify(">>> fetchAttachments()") #Debug
+   attachments = []
+   hostCards = eval(getGlobalVariable('Host Cards'))
+   for attachment in hostCards:
+      if hostCards[attachment] == card._id: attachments.append(Card(attachment))
+   debugNotify("<<< fetchAttachments() with return {}".format(attachments)) #Debug
+   return attachments
    
 def compareValue(comparison, value, requirement):
    debugNotify(">>> compareValue()")
